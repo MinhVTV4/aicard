@@ -251,6 +251,10 @@
             serverTimestamp,
             writeBatch
         } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+        // =================================================================
+        // THAY ĐỔI: Import thêm module AI của Firebase
+        // =================================================================
+        import { getAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-ai.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -266,6 +270,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        // =================================================================
+        // THAY ĐỔI: Khởi tạo model Gemini thông qua Firebase AI SDK
+        // =================================================================
+        const ai = getAI(app);
+        const generativeModel = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
+
 
         // --- GLOBAL STATE ---
         let currentUser = null;
@@ -729,25 +739,14 @@
                 render();
 
                 try {
+                    // =================================================================
+                    // THAY ĐỔI: Sử dụng Firebase AI SDK thay vì fetch
+                    // =================================================================
                     const prompt = `Tạo một danh sách các flashcard về chủ đề: "${topic}". Trả về một mảng JSON hợp lệ của các đối tượng. Mỗi đối tượng phải có hai khóa: "front" (mặt trước của thẻ) và "back" (mặt sau của thẻ). Không thêm bất kỳ văn bản giải thích nào khác, chỉ có mảng JSON.`;
                     
-                    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                    const payload = { contents: chatHistory };
-                    const apiKey = ""; // Canvas will provide the key
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`API error: ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    const text = result.candidates[0].content.parts[0].text;
+                    const result = await generativeModel.generateContent(prompt);
+                    const response = result.response;
+                    const text = response.text();
                     
                     // Sanitize the response to get only the JSON array
                     const jsonMatch = text.match(/\[[\s\S]*\]/);
