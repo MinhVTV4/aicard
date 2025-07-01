@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard AI - MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .dark ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        .dark .spinner { border-left-color: #38bdf8; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Flashcard Study Mode Styles */
+        .study-card-container {
+            perspective: 1500px;
+        }
+        .study-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .study-card.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .study-card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .study-card-front {
+            background-color: white;
+        }
+        .dark .study-card-front {
+            background-color: #1e293b; /* slate-800 */
+        }
+        .study-card-back {
+            background-color: #f0f9ff; /* sky-50 */
+            transform: rotateY(180deg);
+        }
+        .dark .study-card-back {
+            background-color: #0c4a6e; /* sky-900 */
+        }
+
+        /* Modal transition */
+        .modal { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .modal.hidden { pointer-events: none; opacity: 0; transform: scale(0.95); }
+        .modal-overlay { transition: opacity 0.25s ease; }
+        .modal-overlay.hidden { pointer-events: none; opacity: 0; }
+        
+        /* Skeleton Loading */
+        .skeleton {
+            background-color: #e2e8f0;
+            border-radius: 0.5rem;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .dark .skeleton { background-color: #334155; }
+        @keyframes pulse {
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+
+    <!-- =========== AUTHENTICATION VIEW =========== -->
+    <div id="auth-view" class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
+            <div>
+                <h2 class="text-center text-3xl font-bold tracking-tight">Flashcard AI</h2>
+                <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Đăng nhập để bắt đầu học</p>
+            </div>
+            <div id="auth-forms">
+                <!-- Auth forms will be rendered here by JS -->
+            </div>
+            <p id="auth-error" class="text-center text-sm text-red-500 min-h-[20px]"></p>
+        </div>
+    </div>
+
+    <!-- =========== MAIN APPLICATION VIEW =========== -->
+    <div id="app-view" class="hidden">
+        <!-- App Header -->
+        <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="user-display-name" class="text-sm font-medium"></span>
+                        <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- This area will be dynamically populated with Decks, Cards, or Study view -->
+        </main>
+    </div>
+
+    <!-- =========== MODALS =========== -->
+    <!-- Generic Modal Container -->
+    <div id="modal-container">
+        <!-- Modals will be rendered here by JS -->
+    </div>
+
+    <!-- =========== TEMPLATES (for cloning) =========== -->
+    <template id="template-decks-view">
+        <div id="decks-view">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">Bộ thẻ của bạn</h1>
+                <div class="flex gap-2">
+                    <button id="ai-create-deck-btn" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        Tạo với AI
+                    </button>
+                    <button id="create-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Tạo bộ thẻ mới</button>
+                </div>
+            </div>
+            <div id="deck-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Deck cards will be rendered here -->
+            </div>
+        </div>
+    </template>
+    
+    <template id="template-cards-view">
+        <div id="cards-view">
+            <div class="mb-6">
+                <button id="back-to-decks-btn" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Tất cả bộ thẻ
+                </button>
+                <h1 id="deck-title" class="text-3xl font-bold mt-2"></h1>
+                <p id="deck-description" class="text-slate-500 mt-1"></p>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Thẻ trong bộ này</h2>
+                <div class="flex gap-2">
+                    <button id="add-card-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all">Thêm thẻ</button>
+                    <button id="study-deck-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Học
+                    </button>
+                </div>
+            </div>
+            <div id="card-list" class="space-y-3">
+                <!-- Card items will be rendered here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="template-study-view">
+        <div id="study-view" class="flex flex-col items-center max-w-3xl mx-auto">
+            <div class="w-full flex justify-between items-center mb-4">
+                 <button id="exit-study-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-2 py-2 px-3 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    Thoát
+                </button>
+                <div id="study-counter" class="text-lg font-bold"></div>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 mb-6">
+                <div id="study-progress-bar" class="bg-sky-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            
+            <div class="w-full h-80 study-card-container mb-6">
+                <div id="study-card" class="study-card cursor-pointer">
+                    <div class="study-card-face study-card-front">
+                        <p id="study-card-front-text"></p>
+                    </div>
+                    <div class="study-card-face study-card-back">
+                        <p id="study-card-back-text"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="study-controls" class="grid grid-cols-2 gap-4 w-full max-w-md">
+                 <button id="needs-review-btn" class="py-4 px-6 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Chưa thuộc</button>
+                 <button id="known-btn" class="py-4 px-6 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Đã thuộc</button>
+            </div>
+            
+            <div id="study-complete-message" class="hidden text-center py-10">
+                <h2 class="text-3xl font-bold text-green-500">Hoàn thành!</h2>
+                <p class="mt-2 text-slate-500">Bạn đã ôn tập xong tất cả các thẻ trong phiên này.</p>
+                <button id="study-again-btn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Học lại</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            getDocs, 
+            getDoc, 
+            updateDoc, 
+            deleteDoc, 
+            query, 
+            where, 
+            orderBy, 
+            serverTimestamp,
+            writeBatch
+        } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIJ6_MeavfS37IJDXRfIshV7T09HY0zMs",
+            authDomain: "aieng-500da.firebaseapp.com",
+            projectId: "aieng-500da",
+            storageBucket: "aieng-500da.firebasestorage.app",
+            messagingSenderId: "586536179017",
+            appId: "1:586536179017:web:6c3fe56961137f5d957698"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- GLOBAL STATE ---
+        let currentUser = null;
+
+        // --- DOM ELEMENTS ---
+        const authView = document.getElementById('auth-view');
+        const appView = document.getElementById('app-view');
+        const authForms = document.getElementById('auth-forms');
+        const authError = document.getElementById('auth-error');
+        const userDisplayName = document.getElementById('user-display-name');
+        const mainContent = document.getElementById('main-content');
+        const modalContainer = document.getElementById('modal-container');
+
+        // --- SVG ICONS ---
+        const icons = {
+            delete: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
+            edit: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>`,
+            google: `<svg class="w-5 h-5 mr-2" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,36.626,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`
+        };
+
+        // --- AUTHENTICATION LOGIC ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                authView.classList.add('hidden');
+                appView.classList.remove('hidden');
+                userDisplayName.textContent = user.displayName || user.email;
+                renderDecksView();
+            } else {
+                currentUser = null;
+                appView.classList.add('hidden');
+                authView.classList.remove('hidden');
+                renderAuthForms();
+            }
+        });
+
+        function renderAuthForms(showLogin = true) {
+            authForms.innerHTML = `
+                <form id="${showLogin ? 'login' : 'register'}-form" class="space-y-4">
+                    <input type="email" id="${showLogin ? 'login' : 'register'}-email" placeholder="Email" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    <input type="password" id="${showLogin ? 'login' : 'register'}-password" placeholder="Mật khẩu" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">${showLogin ? 'Đăng nhập' : 'Đăng ký'}</button>
+                </form>
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t dark:border-slate-600"></span></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-slate-800 px-2 text-slate-500">Hoặc</span></div>
+                </div>
+                <button id="google-signin-btn" class="w-full flex justify-center items-center bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm transition-all">${icons.google} Đăng nhập với Google</button>
+                <p class="text-center text-sm">
+                    <a href="#" id="toggle-auth-mode" class="font-medium text-sky-600 hover:text-sky-500">${showLogin ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}</a>
+                </p>
+            `;
+            
+            document.getElementById('toggle-auth-mode').addEventListener('click', (e) => {
+                e.preventDefault();
+                renderAuthForms(!showLogin);
+            });
+
+            document.getElementById(`${showLogin ? 'login' : 'register'}-form`).addEventListener('submit', async (e) => {
+                e.preventDefault();
+                authError.textContent = '';
+                const email = e.target.elements[`${showLogin ? 'login' : 'register'}-email`].value;
+                const password = e.target.elements[`${showLogin ? 'login' : 'register'}-password`].value;
+                try {
+                    if (showLogin) {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } else {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    }
+                } catch (error) {
+                    authError.textContent = 'Email hoặc mật khẩu không hợp lệ.';
+                    console.error("Auth error:", error);
+                }
+            });
+
+            document.getElementById('google-signin-btn').addEventListener('click', async () => {
+                try {
+                    await signInWithPopup(auth, new GoogleAuthProvider());
+                } catch (error) {
+                    authError.textContent = 'Đăng nhập Google thất bại.';
+                    console.error("Google sign-in error:", error);
+                }
+            });
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+
+        // --- DECK MANAGEMENT ---
+        
+        async function renderDecksView() {
+            mainContent.innerHTML = '';
+            const template = document.getElementById('template-decks-view');
+            mainContent.appendChild(template.content.cloneNode(true));
+            
+            document.getElementById('create-deck-btn').addEventListener('click', () => renderDeckModal());
+            document.getElementById('ai-create-deck-btn').addEventListener('click', renderAiDeckModal);
+
+            const deckListEl = document.getElementById('deck-list');
+            deckListEl.innerHTML = Array(6).fill(0).map(() => `<div class="h-48 skeleton"></div>`).join('');
+
+            try {
+                const decksRef = collection(db, 'users', currentUser.uid, 'decks');
+                const q = query(decksRef, orderBy('createdAt', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                deckListEl.innerHTML = '';
+                if (querySnapshot.empty) {
+                    deckListEl.innerHTML = `<p class="col-span-full text-center text-slate-500">Bạn chưa có bộ thẻ nào. Hãy tạo một bộ mới!</p>`;
+                } else {
+                    querySnapshot.forEach(doc => {
+                        const deck = { id: doc.id, ...doc.data() };
+                        const deckCard = document.createElement('div');
+                        deckCard.className = 'bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all';
+                        deckCard.innerHTML = `
+                            <div>
+                                <h3 class="font-bold text-lg truncate">${deck.name}</h3>
+                                <p class="text-sm text-slate-500 mt-1">${deck.cardCount || 0} thẻ</p>
+                            </div>
+                            <div class="flex justify-end gap-2 mt-4">
+                                <button class="edit-deck-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">${icons.edit}</button>
+                                <button class="delete-deck-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-red-500">${icons.delete}</button>
+                            </div>
+                        `;
+                        deckCard.addEventListener('click', (e) => {
+                            if (!e.target.closest('button')) {
+                                renderCardsView(deck.id);
+                            }
+                        });
+                        deckCard.querySelector('.edit-deck-btn').addEventListener('click', () => renderDeckModal(deck));
+                        deckCard.querySelector('.delete-deck-btn').addEventListener('click', () => deleteDeck(deck.id, deck.name));
+                        deckListEl.appendChild(deckCard);
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching decks:", error);
+                deckListEl.innerHTML = `<p class="col-span-full text-center text-red-500">Lỗi khi tải các bộ thẻ.</p>`;
+            }
+        }
+
+        function renderDeckModal(deck = null) {
+            const modalId = 'deck-modal';
+            const modalHTML = `
+                <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
+                <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
+                    <h2 class="text-xl font-bold mb-4">${deck ? 'Chỉnh sửa bộ thẻ' : 'Tạo bộ thẻ mới'}</h2>
+                    <form id="deck-form" class="space-y-4">
+                        <input type="text" id="deck-name-input" placeholder="Tên bộ thẻ" value="${deck ? deck.name : ''}" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <textarea id="deck-desc-input" placeholder="Mô tả (tùy chọn)" rows="3" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${deck ? deck.description : ''}</textarea>
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modalContainer.innerHTML = modalHTML;
+            
+            const closeModal = () => modalContainer.innerHTML = '';
+            document.getElementById(`${modalId}-overlay`).addEventListener('click', closeModal);
+            document.querySelector('.cancel-btn').addEventListener('click', closeModal);
+
+            document.getElementById('deck-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('deck-name-input').value.trim();
+                const description = document.getElementById('deck-desc-input').value.trim();
+                if (!name) return;
+
+                const deckData = { name, description };
+                try {
+                    if (deck) {
+                        await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deck.id), deckData);
+                    } else {
+                        deckData.createdAt = serverTimestamp();
+                        deckData.cardCount = 0;
+                        await addDoc(collection(db, 'users', currentUser.uid, 'decks'), deckData);
+                    }
+                    closeModal();
+                    renderDecksView();
+                } catch (error) {
+                    console.error("Error saving deck:", error);
+                    alert("Lỗi khi lưu bộ thẻ.");
+                }
+            });
+        }
+        
+        async function deleteDeck(deckId, deckName) {
+            if (!confirm(`Bạn có chắc chắn muốn xóa bộ thẻ "${deckName}" không? Hành động này không thể hoàn tác.`)) return;
+            try {
+                // Note: Deleting a document does not delete its subcollections.
+                // For a full MVP, a Cloud Function would be needed to delete all cards in the subcollection.
+                // For this client-side MVP, we'll just delete the deck document.
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId));
+                renderDecksView();
+            } catch (error) {
+                console.error("Error deleting deck:", error);
+                alert("Lỗi khi xóa bộ thẻ.");
+            }
+        }
+        
+        // --- CARD MANAGEMENT ---
+        async function renderCardsView(deckId) {
+            mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
+            try {
+                const deckRef = doc(db, 'users', currentUser.uid, 'decks', deckId);
+                const deckSnap = await getDoc(deckRef);
+                if (!deckSnap.exists()) throw new Error("Deck not found");
+                const deck = { id: deckSnap.id, ...deckSnap.data() };
+
+                mainContent.innerHTML = '';
+                const template = document.getElementById('template-cards-view');
+                mainContent.appendChild(template.content.cloneNode(true));
+
+                document.getElementById('deck-title').textContent = deck.name;
+                document.getElementById('deck-description').textContent = deck.description;
+                
+                document.getElementById('back-to-decks-btn').addEventListener('click', renderDecksView);
+                document.getElementById('add-card-btn').addEventListener('click', () => renderCardModal(deckId));
+                document.getElementById('study-deck-btn').addEventListener('click', () => renderStudyView(deckId));
+
+
+                const cardListEl = document.getElementById('card-list');
+                cardListEl.innerHTML = `<div class="h-24 skeleton"></div><div class="h-24 skeleton"></div>`;
+
+                const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
+                const q = query(cardsRef, orderBy('createdAt', 'desc'));
+                const cardsSnapshot = await getDocs(q);
+
+                cardListEl.innerHTML = '';
+                if (cardsSnapshot.empty) {
+                    cardListEl.innerHTML = `<p class="text-center text-slate-500 py-8">Bộ thẻ này chưa có thẻ nào. Hãy thêm thẻ đầu tiên!</p>`;
+                } else {
+                    cardsSnapshot.forEach(doc => {
+                        const card = { id: doc.id, ...doc.data() };
+                        const cardItem = document.createElement('div');
+                        cardItem.className = 'bg-white dark:bg-slate-800 rounded-xl shadow p-4 flex items-center justify-between';
+                        cardItem.innerHTML = `
+                            <div class="grid grid-cols-2 gap-4 flex-1">
+                                <p class="truncate">${card.front}</p>
+                                <p class="truncate text-slate-500">${card.back}</p>
+                            </div>
+                            <div class="flex gap-2 ml-4">
+                                <button class="edit-card-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">${icons.edit}</button>
+                                <button class="delete-card-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-red-500">${icons.delete}</button>
+                            </div>
+                        `;
+                        cardItem.querySelector('.edit-card-btn').addEventListener('click', () => renderCardModal(deckId, card));
+                        cardItem.querySelector('.delete-card-btn').addEventListener('click', () => deleteCard(deckId, card.id));
+                        cardListEl.appendChild(cardItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error rendering cards view:", error);
+                mainContent.innerHTML = `<p class="text-center text-red-500">Lỗi khi tải bộ thẻ. <a href="#" onclick="renderDecksView()">Quay lại</a></p>`;
+            }
+        }
+
+        function renderCardModal(deckId, card = null) {
+            const modalId = 'card-modal';
+            const modalHTML = `
+                <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
+                <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
+                    <h2 class="text-xl font-bold mb-4">${card ? 'Chỉnh sửa thẻ' : 'Thêm thẻ mới'}</h2>
+                    <form id="card-form" class="space-y-4">
+                        <textarea id="card-front-input" placeholder="Mặt trước" rows="4" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card ? card.front : ''}</textarea>
+                        <textarea id="card-back-input" placeholder="Mặt sau" rows="4" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card ? card.back : ''}</textarea>
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modalContainer.innerHTML = modalHTML;
+            
+            const closeModal = () => modalContainer.innerHTML = '';
+            document.getElementById(`${modalId}-overlay`).addEventListener('click', closeModal);
+            document.querySelector('.cancel-btn').addEventListener('click', closeModal);
+
+            document.getElementById('card-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const front = document.getElementById('card-front-input').value.trim();
+                const back = document.getElementById('card-back-input').value.trim();
+                if (!front || !back) return;
+
+                const cardData = { front, back };
+                try {
+                    if (card) {
+                        await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', card.id), cardData);
+                    } else {
+                        cardData.createdAt = serverTimestamp();
+                        await addDoc(collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards'), cardData);
+                    }
+                    closeModal();
+                    renderCardsView(deckId);
+                } catch (error) {
+                    console.error("Error saving card:", error);
+                    alert("Lỗi khi lưu thẻ.");
+                }
+            });
+        }
+
+        async function deleteCard(deckId, cardId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa thẻ này?')) return;
+            try {
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', cardId));
+                renderCardsView(deckId);
+            } catch (error) {
+                console.error("Error deleting card:", error);
+                alert("Lỗi khi xóa thẻ.");
+            }
+        }
+        
+        // --- STUDY MODE ---
+        async function renderStudyView(deckId) {
+            mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
+            try {
+                const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
+                const cardsSnapshot = await getDocs(cardsRef);
+                const allCards = cardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if (allCards.length === 0) {
+                    alert("Bộ thẻ này trống. Hãy thêm thẻ để bắt đầu học.");
+                    renderCardsView(deckId);
+                    return;
+                }
+
+                mainContent.innerHTML = '';
+                const template = document.getElementById('template-study-view');
+                mainContent.appendChild(template.content.cloneNode(true));
+
+                let remainingCards = [...allCards].sort(() => Math.random() - 0.5); // Shuffle cards
+                let knownCards = [];
+                let currentCardIndex = 0;
+
+                const studyCard = document.getElementById('study-card');
+                const frontText = document.getElementById('study-card-front-text');
+                const backText = document.getElementById('study-card-back-text');
+                const counter = document.getElementById('study-counter');
+                const progressBar = document.getElementById('study-progress-bar');
+                const controls = document.getElementById('study-controls');
+                const completeMessage = document.getElementById('study-complete-message');
+
+                function showNextCard() {
+                    if (currentCardIndex >= remainingCards.length) {
+                        // Session complete
+                        controls.classList.add('hidden');
+                        completeMessage.classList.remove('hidden');
+                        studyCard.classList.add('hidden');
+                        counter.textContent = "Hoàn thành!";
+                        return;
+                    }
+
+                    const card = remainingCards[currentCardIndex];
+                    studyCard.classList.remove('is-flipped');
+                    frontText.textContent = card.front;
+                    backText.textContent = card.back;
+                    
+                    const totalInSession = remainingCards.length + knownCards.length;
+                    const completedInSession = knownCards.length;
+                    counter.textContent = `Thẻ ${completedInSession + 1} / ${totalInSession}`;
+                    progressBar.style.width = `${(completedInSession / totalInSession) * 100}%`;
+                }
+
+                function handleReview(isKnown) {
+                    if (isKnown) {
+                        knownCards.push(remainingCards[currentCardIndex]);
+                        remainingCards.splice(currentCardIndex, 1);
+                    } else {
+                        // Move card to the end of the queue
+                        const cardToRepeat = remainingCards.splice(currentCardIndex, 1)[0];
+                        remainingCards.push(cardToRepeat);
+                    }
+                    showNextCard();
+                }
+
+                studyCard.addEventListener('click', () => studyCard.classList.toggle('is-flipped'));
+                document.getElementById('needs-review-btn').addEventListener('click', () => handleReview(false));
+                document.getElementById('known-btn').addEventListener('click', () => handleReview(true));
+                document.getElementById('exit-study-btn').addEventListener('click', () => renderCardsView(deckId));
+                document.getElementById('study-again-btn').addEventListener('click', () => renderStudyView(deckId));
+
+                showNextCard();
+
+            } catch (error) {
+                console.error("Error starting study session:", error);
+                mainContent.innerHTML = `<p class="text-center text-red-500">Lỗi khi bắt đầu phiên học. <a href="#" onclick="renderCardsView('${deckId}')">Quay lại</a></p>`;
+            }
+        }
+
+        // --- AI CARD GENERATION ---
+        function renderAiDeckModal() {
+            const modalId = 'ai-deck-modal';
+            let generatedCards = [];
+            let state = 'input'; // 'input', 'loading', 'review'
+
+            function render() {
+                let contentHTML = '';
+                switch(state) {
+                    case 'input':
+                        contentHTML = `
+                            <h2 class="text-xl font-bold mb-4">Tạo bộ thẻ với AI</h2>
+                            <p class="text-sm text-slate-500 mb-4">Nhập một chủ đề, và AI sẽ tạo ra một bộ thẻ cho bạn. Ví dụ: "15 từ vựng tiếng Anh về du lịch", "Các đời tổng thống Hoa Kỳ", "Các hằng số vật lý cơ bản".</p>
+                            <form id="ai-deck-form">
+                                <textarea id="ai-topic-input" placeholder="Nhập chủ đề..." rows="3" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                                <div class="flex justify-end gap-2 pt-4">
+                                    <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
+                                    <button type="submit" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white">Tạo thẻ</button>
+                                </div>
+                            </form>
+                        `;
+                        break;
+                    case 'loading':
+                        contentHTML = `
+                            <div class="flex flex-col items-center justify-center p-10">
+                                <div class="spinner"></div>
+                                <p class="mt-4 text-slate-500">AI đang suy nghĩ... Vui lòng chờ trong giây lát.</p>
+                            </div>
+                        `;
+                        break;
+                    case 'review':
+                        contentHTML = `
+                            <h2 class="text-xl font-bold mb-4">Xem lại các thẻ đã tạo</h2>
+                            <p class="text-sm text-slate-500 mb-4">Bỏ chọn những thẻ bạn không muốn lưu. Sau đó, nhập tên cho bộ thẻ mới của bạn.</p>
+                            <div id="ai-review-list" class="max-h-60 overflow-y-auto space-y-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg border dark:border-slate-600">
+                                ${generatedCards.map((card, index) => `
+                                    <div class="bg-white dark:bg-slate-800 p-2 rounded-md flex items-start gap-2">
+                                        <input type="checkbox" id="card-check-${index}" checked class="mt-1">
+                                        <label for="card-check-${index}" class="flex-1 grid grid-cols-2 gap-2 text-sm">
+                                            <span class="font-medium">${card.front}</span>
+                                            <span class="text-slate-500">${card.back}</span>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <form id="ai-save-form" class="mt-4">
+                                <input type="text" id="ai-deck-name-input" placeholder="Tên bộ thẻ mới" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <div class="flex justify-end gap-2 pt-4">
+                                    <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
+                                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu bộ thẻ</button>
+                                </div>
+                            </form>
+                        `;
+                        break;
+                }
+                modalContainer.innerHTML = `
+                    <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
+                    <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
+                        ${contentHTML}
+                    </div>
+                `;
+                addEventListeners();
+            }
+            
+            async function handleAiFormSubmit(e) {
+                e.preventDefault();
+                const topic = document.getElementById('ai-topic-input').value.trim();
+                if (!topic) return;
+
+                state = 'loading';
+                render();
+
+                try {
+                    const prompt = `Tạo một danh sách các flashcard về chủ đề: "${topic}". Trả về một mảng JSON hợp lệ của các đối tượng. Mỗi đối tượng phải có hai khóa: "front" (mặt trước của thẻ) và "back" (mặt sau của thẻ). Không thêm bất kỳ văn bản giải thích nào khác, chỉ có mảng JSON.`;
+                    
+                    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // Canvas will provide the key
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates[0].content.parts[0].text;
+                    
+                    // Sanitize the response to get only the JSON array
+                    const jsonMatch = text.match(/\[[\s\S]*\]/);
+                    if (!jsonMatch) throw new Error("AI did not return a valid JSON array.");
+                    
+                    generatedCards = JSON.parse(jsonMatch[0]);
+                    state = 'review';
+                    render();
+                } catch (error) {
+                    console.error("AI generation error:", error);
+                    alert("Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.");
+                    state = 'input';
+                    render();
+                }
+            }
+
+            async function handleSaveAiDeck(e) {
+                e.preventDefault();
+                const deckName = document.getElementById('ai-deck-name-input').value.trim();
+                if (!deckName) return;
+
+                const selectedCards = [];
+                generatedCards.forEach((card, index) => {
+                    const checkbox = document.getElementById(`card-check-${index}`);
+                    if (checkbox && checkbox.checked) {
+                        selectedCards.push(card);
+                    }
+                });
+
+                if (selectedCards.length === 0) {
+                    alert("Bạn phải chọn ít nhất một thẻ để lưu.");
+                    return;
+                }
+
+                try {
+                    // Create new deck
+                    const deckRef = await addDoc(collection(db, 'users', currentUser.uid, 'decks'), {
+                        name: deckName,
+                        description: `Được tạo bởi AI về chủ đề: "${document.getElementById('ai-topic-input')?.value.trim() || 'không rõ'}"`,
+                        createdAt: serverTimestamp(),
+                        cardCount: selectedCards.length
+                    });
+
+                    // Add cards in a batch
+                    const batch = writeBatch(db);
+                    const cardsColRef = collection(db, 'users', currentUser.uid, 'decks', deckRef.id, 'cards');
+                    selectedCards.forEach(card => {
+                        const newCardRef = doc(cardsColRef);
+                        batch.set(newCardRef, { ...card, createdAt: serverTimestamp() });
+                    });
+                    await batch.commit();
+                    
+                    modalContainer.innerHTML = '';
+                    renderDecksView();
+
+                } catch (error) {
+                    console.error("Error saving AI deck:", error);
+                    alert("Lỗi khi lưu bộ thẻ được tạo bởi AI.");
+                }
+            }
+
+            function addEventListeners() {
+                const closeModal = () => modalContainer.innerHTML = '';
+                const overlay = document.getElementById(`${modalId}-overlay`);
+                if (overlay) overlay.addEventListener('click', closeModal);
+                
+                const cancelBtn = document.querySelector('.cancel-btn');
+                if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+                const aiForm = document.getElementById('ai-deck-form');
+                if (aiForm) aiForm.addEventListener('submit', handleAiFormSubmit);
+
+                const saveForm = document.getElementById('ai-save-form');
+                if (saveForm) saveForm.addEventListener('submit', handleSaveAiDeck);
+            }
+
+            render();
+        }
+
+    </script>
+</body>
+</html>
