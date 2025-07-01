@@ -106,6 +106,41 @@
         .prose strong { font-weight: 600; }
         .prose blockquote { border-left: 4px solid #e2e8f0; padding-left: 1rem; font-style: italic; color: #64748b; }
         .dark .prose blockquote { border-left-color: #334155; color: #94a3b8;}
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none; /* Allows clicks to pass through */
+        }
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInOut 4s forwards;
+            pointer-events: auto; /* Re-enable pointer events for the toast itself */
+            min-width: 200px;
+            max-width: 300px;
+        }
+        .toast.success { background-color: #22c55e; } /* green-500 */
+        .toast.error { background-color: #ef4444; }   /* red-500 */
+        .toast.info { background-color: #3b82f6; }    /* blue-500 */
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(20px); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -134,6 +169,10 @@
                         <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
                     </div>
                     <div class="flex items-center gap-4">
+                        <!-- Dark Mode Toggle Button -->
+                        <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
+                            <!-- Icon will be dynamically set by JS -->
+                        </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
                     </div>
@@ -152,6 +191,9 @@
     <div id="modal-container">
         <!-- Modals will be rendered here by JS -->
     </div>
+
+    <!-- =========== TOAST CONTAINER =========== -->
+    <div id="toast-container"></div>
 
     <!-- =========== TEMPLATES (for cloning) =========== -->
     <template id="template-decks-view">
@@ -186,6 +228,10 @@
                 <h2 class="text-xl font-semibold">Thẻ trong bộ này</h2>
                 <div class="flex gap-2">
                     <button id="add-card-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all">Thêm thẻ</button>
+                    <button id="preview-deck-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        Xem trước
+                    </button>
                     <button id="study-deck-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Học
@@ -198,11 +244,52 @@
         </div>
     </template>
 
+    <template id="template-preview-view">
+        <div id="preview-view" class="flex flex-col items-center max-w-3xl mx-auto">
+            <div class="w-full flex justify-between items-center mb-4">
+                 <button id="exit-preview-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-2 py-2 px-3 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    Thoát
+                </button>
+                <div id="preview-counter" class="text-lg font-bold"></div>
+            </div>
+            
+            <div class="w-full h-96 study-card-container mb-6">
+                <div id="preview-card" class="study-card">
+                    <div class="study-card-face study-card-front flex-col">
+                        <p id="preview-card-front-text" class="text-center"></p>
+                        <button class="speak-btn mt-4">
+                            <!-- Speaker Icon SVG -->
+                        </button>
+                    </div>
+                    <div class="study-card-face study-card-back">
+                        <div id="preview-card-back-content" class="w-full h-full"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center gap-4 w-full max-w-2xl">
+                <button id="prev-card-btn" class="py-3 px-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button id="flip-preview-card-btn" class="flex-1 py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Lật thẻ</button>
+                <button id="next-card-btn" class="py-3 px-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <button id="start-study-from-preview-btn" class="mt-6 w-full max-w-md py-3 px-6 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Bắt đầu học
+            </button>
+        </div>
+    </template>
+
     <template id="template-study-view">
         <div id="study-view" class="flex flex-col items-center max-w-3xl mx-auto">
             <div class="w-full flex justify-between items-center mb-4">
                  <button id="exit-study-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-2 py-2 px-3 rounded-lg bg-slate-100 dark:bg-slate-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                     Thoát
                 </button>
                 <div id="study-counter" class="text-lg font-bold"></div>
@@ -295,6 +382,8 @@
 
         // --- GLOBAL STATE ---
         let currentUser = null;
+        let currentPlayingUtterance = null; // To manage the currently playing speech utterance
+        let currentPlayingButtonContainer = null; // To manage the UI of the buttons
 
         // --- DOM ELEMENTS ---
         const authView = document.getElementById('auth-view');
@@ -304,23 +393,143 @@
         const userDisplayName = document.getElementById('user-display-name');
         const mainContent = document.getElementById('main-content');
         const modalContainer = document.getElementById('modal-container');
+        const toastContainer = document.getElementById('toast-container');
+        const themeToggleButton = document.getElementById('theme-toggle');
 
         // --- SVG ICONS ---
         const icons = {
             delete: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
             edit: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>`,
             google: `<svg class="w-5 h-5 mr-2" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,36.626,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`,
-            speaker: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>`
+            speaker: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>`,
+            loading: `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`,
+            moon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`,
+            sun: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`,
+            pause: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+            play_audio: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"></path></svg>`
         };
 
         // --- Text-to-Speech (TTS) UTILITY ---
-        function speakText(text, lang = 'en-US') {
-            if (!text || !('speechSynthesis' in window)) return;
-            speechSynthesis.cancel(); // Stop any previous speech
+        function speakText(text, lang = 'en-US', rate = 1.0, onEndCallback = null) {
+            if (!text || !('speechSynthesis' in window)) {
+                console.warn("SpeechSynthesis not supported or text is empty.");
+                return null;
+            }
+
+            speechSynthesis.cancel(); // Stop any previous speech before starting a new one
+            
+            // Reset UI for previously playing button
+            if (currentPlayingButtonContainer) {
+                currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
+                currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+            }
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
+            utterance.rate = rate; // Set the rate
+
+            const voices = speechSynthesis.getVoices();
+            const voice = voices.find(v => v.lang === lang);
+            if (voice) {
+                utterance.voice = voice;
+            } else {
+                console.warn(`No voice found for language: ${lang}. Using default.`);
+            }
+
+            utterance.onend = () => {
+                currentPlayingUtterance = null;
+                if (currentPlayingButtonContainer) {
+                    currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
+                    currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                    currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+                    currentPlayingButtonContainer = null;
+                }
+                if (onEndCallback) onEndCallback();
+            };
+
+            utterance.onerror = (event) => {
+                console.error('SpeechSynthesisUtterance.onerror', event);
+                currentPlayingUtterance = null;
+                if (currentPlayingButtonContainer) {
+                    currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
+                    currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                    currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+                    currentPlayingButtonContainer = null;
+                }
+            };
+
             speechSynthesis.speak(utterance);
+            currentPlayingUtterance = utterance; // Store the current utterance
+            return utterance;
         }
+
+        function pauseSpeech() {
+            if (currentPlayingUtterance && speechSynthesis.speaking) {
+                speechSynthesis.pause();
+                if (currentPlayingButtonContainer) {
+                    currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                    currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.remove('hidden');
+                }
+            }
+        }
+
+        function resumeSpeech() {
+            if (currentPlayingUtterance && speechSynthesis.paused) {
+                speechSynthesis.resume();
+                if (currentPlayingButtonContainer) {
+                    currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.remove('hidden');
+                    currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+                }
+            }
+        }
+
+        // --- TOAST NOTIFICATION UTILITY ---
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type} flex items-center justify-between`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button class="ml-4 text-white opacity-75 hover:opacity-100" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        }
+
+        // --- DARK MODE TOGGLE LOGIC ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.classList.toggle('dark', savedTheme === 'dark');
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark');
+            }
+            updateThemeToggleButton();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const isDarkMode = document.body.classList.contains('dark');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeToggleButton();
+        }
+
+        function updateThemeToggleButton() {
+            if (themeToggleButton) {
+                const isDarkMode = document.body.classList.contains('dark');
+                themeToggleButton.innerHTML = isDarkMode ? icons.sun : icons.moon;
+                themeToggleButton.setAttribute('aria-label', isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối');
+            }
+        }
+
+        // Initialize theme on load
+        document.addEventListener('DOMContentLoaded', initTheme);
+
 
         // --- AUTHENTICATION LOGIC ---
         onAuthStateChanged(auth, user => {
@@ -343,7 +552,9 @@
                 <form id="${showLogin ? 'login' : 'register'}-form" class="space-y-4">
                     <input type="email" id="${showLogin ? 'login' : 'register'}-email" placeholder="Email" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
                     <input type="password" id="${showLogin ? 'login' : 'register'}-password" placeholder="Mật khẩu" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">${showLogin ? 'Đăng nhập' : 'Đăng ký'}</button>
+                    <button type="submit" id="${showLogin ? 'login' : 'register'}-submit-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
+                        ${showLogin ? 'Đăng nhập' : 'Đăng ký'}
+                    </button>
                 </form>
                 <div class="relative my-4">
                     <div class="absolute inset-0 flex items-center"><span class="w-full border-t dark:border-slate-600"></span></div>
@@ -363,31 +574,64 @@
             document.getElementById(`${showLogin ? 'login' : 'register'}-form`).addEventListener('submit', async (e) => {
                 e.preventDefault();
                 authError.textContent = '';
+                const submitBtn = document.getElementById(`${showLogin ? 'login' : 'register'}-submit-btn`);
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = icons.loading + (showLogin ? ' Đang đăng nhập...' : ' Đang đăng ký...');
+
                 const email = e.target.elements[`${showLogin ? 'login' : 'register'}-email`].value;
                 const password = e.target.elements[`${showLogin ? 'login' : 'register'}-password`].value;
                 try {
                     if (showLogin) {
                         await signInWithEmailAndPassword(auth, email, password);
+                        showToast('Đăng nhập thành công!', 'success');
                     } else {
                         await createUserWithEmailAndPassword(auth, email, password);
+                        showToast('Đăng ký thành công!', 'success');
                     }
                 } catch (error) {
                     authError.textContent = 'Email hoặc mật khẩu không hợp lệ.';
+                    showToast('Đăng nhập/Đăng ký thất bại.', 'error');
                     console.error("Auth error:", error);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = showLogin ? 'Đăng nhập' : 'Đăng ký';
                 }
             });
 
-            document.getElementById('google-signin-btn').addEventListener('click', async () => {
+            document.getElementById('google-signin-btn').addEventListener('click', async (e) => {
+                const googleBtn = e.currentTarget;
+                googleBtn.disabled = true;
+                googleBtn.innerHTML = icons.loading + ' Đang đăng nhập với Google...';
                 try {
                     await signInWithPopup(auth, new GoogleAuthProvider());
+                    showToast('Đăng nhập Google thành công!', 'success');
                 } catch (error) {
                     authError.textContent = 'Đăng nhập Google thất bại.';
+                    showToast('Đăng nhập Google thất bại.', 'error');
                     console.error("Google sign-in error:", error);
+                } finally {
+                    googleBtn.disabled = false;
+                    googleBtn.innerHTML = icons.google + ' Đăng nhập với Google';
                 }
             });
         }
 
-        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showToast('Đã đăng xuất.', 'info');
+            } catch (error) {
+                console.error("Logout error:", error);
+                showToast('Lỗi khi đăng xuất.', 'error');
+            }
+        });
+
+        // Add event listener for theme toggle after DOM is loaded and element exists
+        document.addEventListener('DOMContentLoaded', () => {
+            if (themeToggleButton) {
+                themeToggleButton.addEventListener('click', toggleTheme);
+            }
+        });
 
 
         // --- DECK MANAGEMENT ---
@@ -420,6 +664,7 @@
                             <div>
                                 <h3 class="font-bold text-lg truncate">${deck.name}</h3>
                                 <p class="text-sm text-slate-500 mt-1">${deck.cardCount || 0} thẻ</p>
+                                ${deck.language ? `<p class="text-xs text-slate-400 mt-0.5">Ngôn ngữ: ${deck.language}</p>` : ''}
                             </div>
                             <div class="flex justify-end gap-2 mt-4">
                                 <button class="edit-deck-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">${icons.edit}</button>
@@ -431,14 +676,21 @@
                                 renderCardsView(deck.id);
                             }
                         });
-                        deckCard.querySelector('.edit-deck-btn').addEventListener('click', () => renderDeckModal(deck));
-                        deckCard.querySelector('.delete-deck-btn').addEventListener('click', () => deleteDeck(deck.id, deck.name));
+                        deckCard.querySelector('.edit-deck-btn').addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent card click event
+                            renderDeckModal(deck);
+                        });
+                        deckCard.querySelector('.delete-deck-btn').addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent card click event
+                            deleteDeck(deck.id, deck.name);
+                        });
                         deckListEl.appendChild(deckCard);
                     });
                 }
             } catch (error) {
                 console.error("Error fetching decks:", error);
                 deckListEl.innerHTML = `<p class="col-span-full text-center text-red-500">Lỗi khi tải các bộ thẻ.</p>`;
+                showToast('Lỗi khi tải các bộ thẻ.', 'error');
             }
         }
 
@@ -449,11 +701,30 @@
                 <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
                     <h2 class="text-xl font-bold mb-4">${deck ? 'Chỉnh sửa bộ thẻ' : 'Tạo bộ thẻ mới'}</h2>
                     <form id="deck-form" class="space-y-4">
-                        <input type="text" id="deck-name-input" placeholder="Tên bộ thẻ" value="${deck ? deck.name : ''}" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                        <textarea id="deck-desc-input" placeholder="Mô tả (tùy chọn)" rows="3" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${deck ? (deck.description || '') : ''}</textarea>
+                        <div>
+                            <label class="text-sm font-medium">Tên bộ thẻ</label>
+                            <input type="text" id="deck-name-input" placeholder="Tên bộ thẻ" value="${deck ? deck.name : ''}" required class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">Mô tả (tùy chọn)</label>
+                            <textarea id="deck-desc-input" placeholder="Mô tả (tùy chọn)" rows="3" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${deck ? (deck.description || '') : ''}</textarea>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">Ngôn ngữ mặc định cho thẻ</label>
+                            <select id="deck-language-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <option value="en-US">Tiếng Anh</option>
+                                <option value="vi-VN">Tiếng Việt</option>
+                                <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
+                                <option value="ko-KR">Tiếng Hàn</option>
+                                <option value="ja-JP">Tiếng Nhật</option>
+                                <!-- Add more languages as needed -->
+                            </select>
+                        </div>
                         <div class="flex justify-end gap-2 pt-4">
                             <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
+                            <button type="submit" id="save-deck-btn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2">
+                                Lưu
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -464,26 +735,45 @@
             document.getElementById(`${modalId}-overlay`).addEventListener('click', closeModal);
             document.querySelector('.cancel-btn').addEventListener('click', closeModal);
 
+            // Set the language input value if editing an existing deck
+            document.getElementById('deck-language-input').value = deck?.language || 'en-US';
+
             document.getElementById('deck-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const saveBtn = document.getElementById('save-deck-btn');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = icons.loading + ' Đang lưu...';
+
                 const name = document.getElementById('deck-name-input').value.trim();
                 const description = document.getElementById('deck-desc-input').value.trim();
-                if (!name) return;
+                const language = document.getElementById('deck-language-input').value; // Get selected language
 
-                const deckData = { name, description };
+                if (!name) {
+                    showToast('Tên bộ thẻ không được để trống.', 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu';
+                    return;
+                }
+
+                const deckData = { name, description, language }; // Include language
                 try {
                     if (deck) {
                         await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deck.id), deckData);
+                        showToast('Đã cập nhật bộ thẻ thành công!', 'success');
                     } else {
                         deckData.createdAt = serverTimestamp();
                         deckData.cardCount = 0;
                         await addDoc(collection(db, 'users', currentUser.uid, 'decks'), deckData);
+                        showToast('Đã tạo bộ thẻ mới thành công!', 'success');
                     }
                     closeModal();
                     renderDecksView();
                 } catch (error) {
                     console.error("Error saving deck:", error);
-                    alert("Lỗi khi lưu bộ thẻ.");
+                    showToast('Lỗi khi lưu bộ thẻ.', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu';
                 }
             });
         }
@@ -491,11 +781,22 @@
         async function deleteDeck(deckId, deckName) {
             if (!confirm(`Bạn có chắc chắn muốn xóa bộ thẻ "${deckName}" không? Hành động này không thể hoàn tác.`)) return;
             try {
+                // First, delete all cards within the deck
+                const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
+                const cardsSnapshot = await getDocs(cardsRef);
+                const batch = writeBatch(db);
+                cardsSnapshot.forEach(cardDoc => {
+                    batch.delete(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', cardDoc.id));
+                });
+                await batch.commit();
+
+                // Then, delete the deck itself
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId));
+                showToast(`Đã xóa bộ thẻ "${deckName}" thành công!`, 'success');
                 renderDecksView();
             } catch (error) {
                 console.error("Error deleting deck:", error);
-                alert("Lỗi khi xóa bộ thẻ.");
+                showToast('Lỗi khi xóa bộ thẻ.', 'error');
             }
         }
         
@@ -517,6 +818,7 @@
                 
                 document.getElementById('back-to-decks-btn').addEventListener('click', renderDecksView);
                 document.getElementById('add-card-btn').addEventListener('click', () => renderCardModal(deckId));
+                document.getElementById('preview-deck-btn').addEventListener('click', () => renderPreviewView(deckId)); // New: Preview button
                 document.getElementById('study-deck-btn').addEventListener('click', () => renderStudyView(deckId));
 
 
@@ -553,11 +855,13 @@
             } catch (error) {
                 console.error("Error rendering cards view:", error);
                 mainContent.innerHTML = `<p class="text-center text-red-500">Lỗi khi tải bộ thẻ. <a href="#" onclick="renderDecksView()">Quay lại</a></p>`;
+                showToast('Lỗi khi tải thẻ.', 'error');
             }
         }
 
         function renderCardModal(deckId, card = null) {
             const modalId = 'card-modal';
+            // Removed language input from card modal
             const modalHTML = `
                 <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
                 <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50">
@@ -582,7 +886,9 @@
                             </div>
                             <div class="flex justify-end gap-2 pt-4">
                                 <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                                <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
+                                <button type="submit" id="save-card-btn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2">
+                                    Lưu
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -596,6 +902,10 @@
 
             document.getElementById('card-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const saveBtn = document.getElementById('save-card-btn');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = icons.loading + ' Đang lưu...';
+
                 const examples = document.getElementById('card-example-input').value.trim().split('\n').filter(line => line).map(line => ({ sentence: line, translation: '' }));
 
                 const cardData = {
@@ -607,7 +917,12 @@
                     back: document.getElementById('card-short-def-input').value.trim(),
                 };
 
-                if (!cardData.term || !cardData.short_definition) return;
+                if (!cardData.term || !cardData.short_definition) {
+                    showToast('Thuật ngữ và định nghĩa ngắn không được để trống.', 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu';
+                    return;
+                }
 
                 try {
                     if (card) {
@@ -616,6 +931,7 @@
                             ...existingData,
                             ...cardData
                         });
+                        showToast('Đã cập nhật thẻ thành công!', 'success');
                     } else {
                         cardData.createdAt = serverTimestamp();
                         cardData.nextReviewDate = Timestamp.now();
@@ -623,12 +939,16 @@
                         cardData.easeFactor = 2.5;
                         cardData.repetitions = 0;
                         await addDoc(collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards'), cardData);
+                        showToast('Đã thêm thẻ mới thành công!', 'success');
                     }
                     closeModal();
                     renderCardsView(deckId);
                 } catch (error) {
                     console.error("Error saving card:", error);
-                    alert("Lỗi khi lưu thẻ.");
+                    showToast('Lỗi khi lưu thẻ.', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu';
                 }
             });
         }
@@ -637,17 +957,211 @@
             if (!confirm('Bạn có chắc chắn muốn xóa thẻ này?')) return;
             try {
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', cardId));
+                showToast('Đã xóa thẻ thành công!', 'success');
                 renderCardsView(deckId);
             } catch (error) {
                 console.error("Error deleting card:", error);
-                alert("Lỗi khi xóa thẻ.");
+                showToast('Lỗi khi xóa thẻ.', 'error');
             }
         }
         
+        // --- PREVIEW MODE ---
+        async function renderPreviewView(deckId) {
+            mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
+            try {
+                const deckRef = doc(db, 'users', currentUser.uid, 'decks', deckId);
+                const deckSnap = await getDoc(deckRef);
+                if (!deckSnap.exists()) throw new Error("Deck not found");
+                const deckLanguage = deckSnap.data().language || 'en-US'; // Get deck language
+
+                const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
+                const q = query(cardsRef, orderBy('createdAt', 'asc')); // Order by creation for consistent preview
+                const cardsSnapshot = await getDocs(q);
+                
+                const previewCards = cardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if (previewCards.length === 0) {
+                     mainContent.innerHTML = `
+                        <div class="text-center py-10">
+                            <h2 class="text-3xl font-bold text-slate-500">Không có thẻ nào để xem trước.</h2>
+                            <p class="mt-2 text-slate-500">Hãy thêm thẻ vào bộ thẻ này trước.</p>
+                            <button id="back-btn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Quay lại</button>
+                        </div>
+                    `;
+                    document.getElementById('back-btn').addEventListener('click', () => renderCardsView(deckId));
+                    showToast('Không có thẻ nào để xem trước.', 'info');
+                    return;
+                }
+                
+                mainContent.innerHTML = '';
+                const template = document.getElementById('template-preview-view');
+                mainContent.appendChild(template.content.cloneNode(true));
+
+                let currentPreviewCardIndex = 0;
+                let currentSpeed = 1.0; // Default speed for preview mode
+
+                const previewCardEl = document.getElementById('preview-card');
+                const frontTextEl = document.getElementById('preview-card-front-text');
+                const frontSpeakerBtn = previewCardEl.querySelector('.study-card-front .speak-btn');
+                const backContentEl = document.getElementById('preview-card-back-content');
+                const counterEl = document.getElementById('preview-counter');
+                const prevBtn = document.getElementById('prev-card-btn');
+                const nextBtn = document.getElementById('next-card-btn');
+                const flipBtn = document.getElementById('flip-preview-card-btn');
+
+                frontSpeakerBtn.innerHTML = icons.speaker;
+
+                function showPreviewCard() {
+                    const card = previewCards[currentPreviewCardIndex];
+                    previewCardEl.classList.remove('is-flipped'); // Always show front first
+                    
+                    const term = card.term || card.front;
+                    frontTextEl.innerHTML = DOMPurify.sanitize(term);
+                    frontSpeakerBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        speakText(term, deckLanguage, currentSpeed); // Pass currentSpeed
+                        // No pause/resume for front side for now, can add later if needed
+                    };
+
+                    const examplesHTML = (card.examples || []).map(ex => `
+                        <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
+                            <div class="flex-1">
+                                <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
+                                <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
+                            </div>
+                            <div class="flex items-center gap-2 example-audio-controls">
+                                <button class="speak-btn text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
+                                    ${icons.speaker}
+                                </button>
+                                <button class="pause-btn text-amber-500 hover:text-amber-600 hidden">
+                                    ${icons.pause}
+                                </button>
+                                <button class="resume-btn text-green-500 hover:text-green-600 hidden">
+                                    ${icons.play_audio}
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    const backHTML = `
+                        <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
+                            <div class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                                <span>Tốc độ đọc ví dụ:</span>
+                                <select id="example-speed-select" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                    <option value="0.75">0.75x (Chậm)</option>
+                                    <option value="1.0" ${currentSpeed === 1.0 ? 'selected' : ''}>1.0x (Bình thường)</option>
+                                    <option value="1.25">1.25x (Nhanh)</option>
+                                    <option value="1.5">1.5x (Rất nhanh)</option>
+                                </select>
+                            </div>
+                            <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
+                            ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
+                            <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
+                                ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
+                                ${examplesHTML}
+                            </div>
+                        </div>
+                    `;
+                    backContentEl.innerHTML = backHTML;
+                    
+                    // Add event listeners for speed select and example speak/pause/resume buttons
+                    const speedSelect = document.getElementById('example-speed-select');
+                    speedSelect.value = currentSpeed.toString(); // Ensure dropdown reflects current speed
+                    speedSelect.addEventListener('change', (e) => {
+                        currentSpeed = parseFloat(e.target.value);
+                    });
+
+                    backContentEl.querySelectorAll('.example-audio-controls').forEach(controlDiv => {
+                        const speakButton = controlDiv.querySelector('.speak-btn');
+                        const pauseButton = controlDiv.querySelector('.pause-btn');
+                        const resumeButton = controlDiv.querySelector('.resume-btn');
+
+                        speakButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const textToSpeak = speakButton.dataset.text;
+                            currentPlayingButtonContainer = controlDiv; // Store the container for UI updates
+                            speakText(textToSpeak, deckLanguage, currentSpeed);
+                            
+                            // Update button visibility
+                            speakButton.classList.add('hidden');
+                            pauseButton.classList.remove('hidden');
+                            resumeButton.classList.add('hidden'); // Ensure resume is hidden
+                        });
+
+                        pauseButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            pauseSpeech();
+                        });
+
+                        resumeButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            resumeSpeech();
+                        });
+                    });
+
+
+                    counterEl.textContent = `${currentPreviewCardIndex + 1}/${previewCards.length}`;
+                    prevBtn.disabled = currentPreviewCardIndex === 0;
+                    nextBtn.disabled = currentPreviewCardIndex === previewCards.length - 1;
+                }
+                
+                prevBtn.addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop any speech when navigating
+                    if (currentPreviewCardIndex > 0) {
+                        currentPreviewCardIndex--;
+                        showPreviewCard();
+                    }
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop any speech when navigating
+                    if (currentPreviewCardIndex < previewCards.length - 1) {
+                        currentPreviewCardIndex++;
+                        showPreviewCard();
+                    }
+                });
+
+                flipBtn.addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop any speech when flipping
+                    previewCardEl.classList.toggle('is-flipped');
+                });
+
+                previewCardEl.addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop any speech when clicking card
+                    // Only flip if not already flipped (to prevent double flip on initial click)
+                    if (!previewCardEl.classList.contains('is-flipped')) {
+                        previewCardEl.classList.add('is-flipped');
+                    }
+                });
+
+                document.getElementById('exit-preview-btn').addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop speech on exit
+                    renderCardsView(deckId);
+                });
+                document.getElementById('start-study-from-preview-btn').addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop speech on starting study
+                    renderStudyView(deckId);
+                });
+
+                showPreviewCard();
+
+            } catch (error) {
+                console.error("Error starting preview session:", error);
+                mainContent.innerHTML = `<p class="text-center text-red-500">Lỗi khi tải chế độ xem trước. <a href="#" onclick="renderCardsView('${deckId}')">Quay lại</a></p>`;
+                showToast('Lỗi khi tải chế độ xem trước.', 'error');
+            }
+        }
+
+
         // --- STUDY MODE (SRS IMPLEMENTATION) ---
         async function renderStudyView(deckId) {
             mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
             try {
+                const deckRef = doc(db, 'users', currentUser.uid, 'decks', deckId);
+                const deckSnap = await getDoc(deckRef);
+                if (!deckSnap.exists()) throw new Error("Deck not found");
+                const deckLanguage = deckSnap.data().language || 'en-US'; // Get deck language
+
                 const today = Timestamp.now();
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
                 const q = query(cardsRef, where('nextReviewDate', '<=', today));
@@ -664,6 +1178,7 @@
                         </div>
                     `;
                     document.getElementById('back-btn').addEventListener('click', () => renderCardsView(deckId));
+                    showToast('Bạn đã hoàn thành tất cả các thẻ cần ôn tập hôm nay.', 'info');
                     return;
                 }
                 
@@ -676,6 +1191,7 @@
                 let currentCardIndex = 0;
                 let repeatQueue = [];
                 const initialQueueSize = studyQueue.length;
+                let currentSpeed = 1.0; // Default speed for study mode
 
                 const studyCardEl = document.getElementById('study-card');
                 const frontTextEl = document.getElementById('study-card-front-text');
@@ -690,6 +1206,7 @@
                 frontSpeakerBtn.innerHTML = icons.speaker;
 
                 function showNextCard() {
+                    speechSynthesis.cancel(); // Stop any speech when moving to next card
                     if (studyQueue.length === 0) {
                         if (repeatQueue.length > 0) {
                             studyQueue = [...repeatQueue];
@@ -702,6 +1219,7 @@
                             studyCardEl.parentElement.classList.add('hidden');
                             counterEl.textContent = "Hoàn thành!";
                             progressBarEl.style.width = '100%';
+                            showToast('Bạn đã hoàn thành tất cả các thẻ cần ôn tập hôm nay.', 'success');
                             return;
                         }
                     }
@@ -715,7 +1233,7 @@
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
                     frontSpeakerBtn.onclick = (e) => {
                         e.stopPropagation();
-                        speakText(term);
+                        speakText(term, deckLanguage, currentSpeed); // Pass currentSpeed
                     };
 
                     const examplesHTML = (card.examples || []).map(ex => `
@@ -724,14 +1242,31 @@
                                 <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
                                 <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
                             </div>
-                            <button class="speak-btn ml-4 text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
-                                ${icons.speaker}
-                            </button>
+                            <div class="flex items-center gap-2 example-audio-controls">
+                                <button class="speak-btn text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
+                                    ${icons.speaker}
+                                </button>
+                                <button class="pause-btn text-amber-500 hover:text-amber-600 hidden">
+                                    ${icons.pause}
+                                </button>
+                                <button class="resume-btn text-green-500 hover:text-green-600 hidden">
+                                    ${icons.play_audio}
+                                </button>
+                            </div>
                         </div>
                     `).join('');
 
                     const backHTML = `
                         <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
+                            <div class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                                <span>Tốc độ đọc ví dụ:</span>
+                                <select id="example-speed-select" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                    <option value="0.75">0.75x (Chậm)</option>
+                                    <option value="1.0" ${currentSpeed === 1.0 ? 'selected' : ''}>1.0x (Bình thường)</option>
+                                    <option value="1.25">1.25x (Nhanh)</option>
+                                    <option value="1.5">1.5x (Rất nhanh)</option>
+                                </select>
+                            </div>
                             <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
                             ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
                             <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
@@ -742,6 +1277,41 @@
                     `;
                     backContentEl.innerHTML = backHTML;
                     
+                    // Add event listeners for speed select and example speak/pause/resume buttons
+                    const speedSelect = document.getElementById('example-speed-select');
+                    speedSelect.value = currentSpeed.toString(); // Ensure dropdown reflects current speed
+                    speedSelect.addEventListener('change', (e) => {
+                        currentSpeed = parseFloat(e.target.value);
+                    });
+
+                    backContentEl.querySelectorAll('.example-audio-controls').forEach(controlDiv => {
+                        const speakButton = controlDiv.querySelector('.speak-btn');
+                        const pauseButton = controlDiv.querySelector('.pause-btn');
+                        const resumeButton = controlDiv.querySelector('.resume-btn');
+
+                        speakButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const textToSpeak = speakButton.dataset.text;
+                            currentPlayingButtonContainer = controlDiv; // Store the container for UI updates
+                            speakText(textToSpeak, deckLanguage, currentSpeed);
+                            
+                            // Update button visibility
+                            speakButton.classList.add('hidden');
+                            pauseButton.classList.remove('hidden');
+                            resumeButton.classList.add('hidden'); // Ensure resume is hidden
+                        });
+
+                        pauseButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            pauseSpeech();
+                        });
+
+                        resumeButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            resumeSpeech();
+                        });
+                    });
+
                     const cardsDone = initialQueueSize - studyQueue.length - repeatQueue.length;
                     counterEl.textContent = `Còn lại: ${studyQueue.length + repeatQueue.length}`;
                     progressBarEl.style.width = `${(cardsDone / initialQueueSize) * 100}%`;
@@ -774,6 +1344,7 @@
                 }
 
                 async function handleSrsRating(rating) {
+                    speechSynthesis.cancel(); // Stop any speech when rating
                     const card = studyQueue[0];
                     const newSrsData = calculateSrs(card, rating);
                     
@@ -782,6 +1353,7 @@
                         await updateDoc(cardRef, newSrsData);
                     } catch(error) {
                         console.error("Error updating card SRS data:", error);
+                        showToast('Lỗi khi cập nhật dữ liệu học thẻ.', 'error');
                     }
                     
                     studyQueue.shift();
@@ -798,29 +1370,29 @@
                     btn.addEventListener('click', () => handleSrsRating(parseInt(btn.dataset.rating)));
                 });
                 
-                backContentEl.addEventListener('click', (e) => {
-                    const speakButton = e.target.closest('.speak-btn');
-                    if(speakButton) {
-                        e.stopPropagation();
-                        speakText(speakButton.dataset.text);
-                    }
-                });
-
                 studyCardEl.addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop any speech when clicking card
                     if (!studyCardEl.classList.contains('is-flipped')) {
                          document.getElementById('show-answer-btn').click();
                     }
                 });
 
 
-                document.getElementById('exit-study-btn').addEventListener('click', () => renderCardsView(deckId));
-                document.getElementById('study-again-btn').addEventListener('click', () => renderStudyView(deckId));
+                document.getElementById('exit-study-btn').addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop speech on exit
+                    renderCardsView(deckId);
+                });
+                document.getElementById('study-again-btn').addEventListener('click', () => {
+                    speechSynthesis.cancel(); // Stop speech on starting study again
+                    renderStudyView(deckId);
+                });
 
                 showNextCard();
 
             } catch (error) {
                 console.error("Error starting study session:", error);
                 mainContent.innerHTML = `<p class="text-center text-red-500">Lỗi khi bắt đầu phiên học. <a href="#" onclick="renderCardsView('${deckId}')">Quay lại</a></p>`;
+                showToast('Lỗi khi bắt đầu phiên học.', 'error');
             }
         }
 
@@ -829,7 +1401,9 @@
         function renderAiDeckModal() {
             const modalId = 'ai-deck-modal';
             let generatedCards = [];
-            let state = 'input';
+            let aiTopic = ''; // Store the topic for use in deck description
+            let aiDeckLanguage = 'en-US'; // Default language for AI generated decks
+            let state = 'input'; // 'input', 'loading', 'review'
 
             function render() {
                 let contentHTML = '';
@@ -840,9 +1414,21 @@
                             <p class="text-sm text-slate-500 mb-4">Nhập một chủ đề, và AI sẽ tạo ra một bộ thẻ chi tiết cho bạn. Ví dụ: "15 từ vựng tiếng Anh về du lịch", "Các đời tổng thống Hoa Kỳ", "Các hằng số vật lý cơ bản".</p>
                             <form id="ai-deck-form">
                                 <textarea id="ai-topic-input" placeholder="Nhập chủ đề..." rows="3" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                                <div>
+                                    <label class="text-sm font-medium">Ngôn ngữ cho bộ thẻ AI</label>
+                                    <select id="ai-deck-language-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <option value="en-US">Tiếng Anh</option>
+                                        <option value="vi-VN">Tiếng Việt</option>
+                                        <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
+                                        <option value="ko-KR">Tiếng Hàn</option>
+                                        <option value="ja-JP">Tiếng Nhật</option>
+                                    </select>
+                                </div>
                                 <div class="flex justify-end gap-2 pt-4">
                                     <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                                    <button type="submit" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white">Tạo thẻ</button>
+                                    <button type="submit" id="generate-ai-cards-btn" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white flex items-center justify-center gap-2">
+                                        Tạo thẻ
+                                    </button>
                                 </div>
                             </form>
                         `;
@@ -864,17 +1450,19 @@
                                     <div class="bg-white dark:bg-slate-800 p-2 rounded-md flex items-start gap-2">
                                         <input type="checkbox" id="card-check-${index}" checked class="mt-1">
                                         <label for="card-check-${index}" class="flex-1 grid grid-cols-2 gap-2 text-sm">
-                                            <span class="font-medium">${card.term || card.front}</span>
-                                            <span class="text-slate-500">${card.short_definition || card.back}</span>
+                                            <span class="font-medium">${DOMPurify.sanitize(card.term || card.front || '')}</span>
+                                            <span class="text-slate-500">${DOMPurify.sanitize(card.short_definition || card.back || '')}</span>
                                         </label>
                                     </div>
                                 `).join('')}
                             </div>
                             <form id="ai-save-form" class="mt-4">
-                                <input type="text" id="ai-deck-name-input" placeholder="Tên bộ thẻ mới" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <input type="text" id="ai-deck-name-input" placeholder="Tên bộ thẻ mới" value="${aiTopic ? `Flashcards về ${aiTopic}` : ''}" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
                                 <div class="flex justify-end gap-2 pt-4">
                                     <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu bộ thẻ</button>
+                                    <button type="submit" id="save-ai-deck-btn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2">
+                                        Lưu bộ thẻ
+                                    </button>
                                 </div>
                             </form>
                         `;
@@ -887,19 +1475,34 @@
                     </div>
                 `;
                 addEventListeners();
+                // Set default language for AI deck input
+                if (state === 'input') {
+                    document.getElementById('ai-deck-language-input').value = aiDeckLanguage;
+                }
             }
             
             async function handleAiFormSubmit(e) {
                 e.preventDefault();
-                const topic = document.getElementById('ai-topic-input').value.trim();
-                if (!topic) return;
+                const generateBtn = document.getElementById('generate-ai-cards-btn');
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = icons.loading + ' Đang tạo...';
+
+                aiTopic = document.getElementById('ai-topic-input').value.trim();
+                aiDeckLanguage = document.getElementById('ai-deck-language-input').value; // Get selected AI deck language
+
+                if (!aiTopic) {
+                    showToast('Vui lòng nhập chủ đề.', 'error');
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = 'Tạo thẻ';
+                    return;
+                }
 
                 state = 'loading';
-                render();
+                render(); // Re-render to show loading state
 
                 try {
                     const prompt = `
-                        Tạo một danh sách các flashcard về chủ đề: "${topic}".
+                        Tạo một danh sách các flashcard về chủ đề: "${aiTopic}".
                         Trả về một mảng JSON hợp lệ của các đối tượng.
                         Bọc toàn bộ mảng JSON trong một khối mã JSON duy nhất, bắt đầu bằng \`\`\`json và kết thúc bằng \`\`\`.
                         TUYỆT ĐỐI không thêm bất kỳ văn bản giải thích nào bên ngoài khối mã đó.
@@ -927,43 +1530,66 @@
                     const response = result.response;
                     const text = response.text();
                     
-                    // FIXED: Removed incorrect escaping of backticks
-                    const jsonBlockRegex = /```json([\s\S]*?)```/
+                    const jsonBlockRegex = /```json([\s\S]*?)```/;
                     const jsonMatch = text.match(jsonBlockRegex);
-                    if (!jsonMatch || !jsonMatch[1]) {
-                         // Fallback to simpler regex if the ```json block is not found
-                        const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
-                        if (!simplerJsonMatch) {
-                             throw new Error("AI không trả về một mảng JSON hợp lệ.");
-                        }
-                        generatedCards = JSON.parse(simplerJsonMatch[0]);
+                    
+                    let parsedJson;
+                    if (jsonMatch && jsonMatch[1]) {
+                        parsedJson = JSON.parse(jsonMatch[1]);
                     } else {
-                        generatedCards = JSON.parse(jsonMatch[1]);
+                        // Fallback to simpler regex if the ```json block is not found
+                        const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
+                        if (simplerJsonMatch) {
+                            parsedJson = JSON.parse(simplerJsonMatch[0]);
+                        } else {
+                            throw new Error("AI không trả về một mảng JSON hợp lệ.");
+                        }
                     }
+
+                    // Basic validation for generated cards
+                    if (!Array.isArray(parsedJson) || parsedJson.length === 0) {
+                        throw new Error("AI không tạo ra bất kỳ thẻ nào hoặc định dạng không đúng.");
+                    }
+                    generatedCards = parsedJson;
                     
                     state = 'review';
-                    render();
+                    render(); // Re-render to show review state
                 } catch (error) {
                     console.error("AI generation error:", error);
-                    alert("Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.");
-                    state = 'input';
-                    render();
+                    showToast("Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.", 'error');
+                    state = 'input'; // Go back to input state
+                    render(); // Re-render to show input state with error message
+                } finally {
+                    // This finally block is technically not needed here because render() will take care of button state.
+                    // But keeping it for completeness if render() logic changes.
+                    // generateBtn.disabled = false;
+                    // generateBtn.innerHTML = 'Tạo thẻ';
                 }
             }
 
             async function handleSaveAiDeck(e) {
                 e.preventDefault();
+                const saveBtn = document.getElementById('save-ai-deck-btn');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = icons.loading + ' Đang lưu bộ thẻ...';
+
                 const deckName = document.getElementById('ai-deck-name-input').value.trim();
-                if (!deckName) return;
+                if (!deckName) {
+                    showToast("Vui lòng nhập tên cho bộ thẻ.", 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu bộ thẻ';
+                    return;
+                }
 
                 const selectedCards = [];
                 generatedCards.forEach((card, index) => {
                     const checkbox = document.getElementById(`card-check-${index}`);
                     if (checkbox && checkbox.checked) {
+                        // Ensure 'front' and 'back' properties are populated for consistency
                         const newCard = {
                             ...card,
-                            front: card.term || card.front,
-                            back: card.short_definition || card.back,
+                            front: card.term || card.front || '', // Use term if front is missing
+                            back: card.short_definition || card.back || '', // Use short_definition if back is missing
                             nextReviewDate: Timestamp.now(),
                             interval: 0,
                             easeFactor: 2.5,
@@ -974,14 +1600,17 @@
                 });
 
                 if (selectedCards.length === 0) {
-                    alert("Bạn phải chọn ít nhất một thẻ để lưu.");
+                    showToast("Bạn phải chọn ít nhất một thẻ để lưu.", 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu bộ thẻ';
                     return;
                 }
 
                 try {
                     const deckRef = await addDoc(collection(db, 'users', currentUser.uid, 'decks'), {
                         name: deckName,
-                        description: `Được tạo bởi AI về chủ đề: "${document.getElementById('ai-topic-input')?.value.trim() || 'không rõ'}"`,
+                        description: `Được tạo bởi AI về chủ đề: "${aiTopic || 'không rõ'}"`, // Use stored aiTopic
+                        language: aiDeckLanguage, // Save AI deck language
                         createdAt: serverTimestamp(),
                         cardCount: selectedCards.length
                     });
@@ -994,12 +1623,16 @@
                     });
                     await batch.commit();
                     
-                    modalContainer.innerHTML = '';
-                    renderDecksView();
+                    modalContainer.innerHTML = ''; // Close modal
+                    showToast("Đã lưu bộ thẻ được tạo bởi AI thành công!", 'success');
+                    renderDecksView(); // Refresh deck list
 
                 } catch (error) {
                     console.error("Error saving AI deck:", error);
-                    alert("Lỗi khi lưu bộ thẻ được tạo bởi AI.");
+                    showToast("Lỗi khi lưu bộ thẻ được tạo bởi AI.", 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu bộ thẻ';
                 }
             }
 
@@ -1018,7 +1651,7 @@
                 if (saveForm) saveForm.addEventListener('submit', handleSaveAiDeck);
             }
 
-            render();
+            render(); // Initial render
         }
 
     </script>
