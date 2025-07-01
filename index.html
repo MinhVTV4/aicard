@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard AI - MVP</title>
+    <title>Flashcard AI - MVP (Robust JSON)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -59,13 +61,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.75rem;
-            padding: 2rem;
+            padding: 1rem;
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            overflow-y: auto;
         }
         .study-card-front {
             background-color: white;
+            font-size: 1.75rem;
         }
         .dark .study-card-front {
             background-color: #1e293b; /* slate-800 */
@@ -94,6 +97,15 @@
         @keyframes pulse {
             50% { opacity: .5; }
         }
+
+        /* Basic Prose styles for Markdown content */
+        .prose { font-size: 1rem; line-height: 1.75; }
+        .prose h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .prose li { margin-bottom: 0.25rem; }
+        .prose strong { font-weight: 600; }
+        .prose blockquote { border-left: 4px solid #e2e8f0; padding-left: 1rem; font-style: italic; color: #64748b; }
+        .dark .prose blockquote { border-left-color: #334155; color: #94a3b8;}
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -199,26 +211,35 @@
                 <div id="study-progress-bar" class="bg-sky-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
             
-            <div class="w-full h-80 study-card-container mb-6">
-                <div id="study-card" class="study-card cursor-pointer">
-                    <div class="study-card-face study-card-front">
-                        <p id="study-card-front-text"></p>
+            <div class="w-full h-96 study-card-container mb-6">
+                <div id="study-card" class="study-card">
+                    <div class="study-card-face study-card-front flex-col">
+                        <p id="study-card-front-text" class="text-center"></p>
+                        <button class="speak-btn mt-4">
+                            <!-- Speaker Icon SVG -->
+                        </button>
                     </div>
                     <div class="study-card-face study-card-back">
-                        <p id="study-card-back-text"></p>
+                        <div id="study-card-back-content" class="w-full h-full"></div>
                     </div>
                 </div>
             </div>
             
-            <div id="study-controls" class="grid grid-cols-2 gap-4 w-full max-w-md">
-                 <button id="needs-review-btn" class="py-4 px-6 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Chưa thuộc</button>
-                 <button id="known-btn" class="py-4 px-6 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Đã thuộc</button>
+            <div id="show-answer-control" class="w-full max-w-md">
+                <button id="show-answer-btn" class="w-full py-4 px-6 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-transform transform hover:scale-105">Hiển thị Đáp án</button>
+            </div>
+
+            <div id="srs-controls" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
+                 <button data-rating="1" class="srs-rating-btn py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">Lặp lại</button>
+                 <button data-rating="2" class="srs-rating-btn py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">Khó</button>
+                 <button data-rating="3" class="srs-rating-btn py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">Tốt</button>
+                 <button data-rating="4" class="srs-rating-btn py-3 px-4 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">Dễ</button>
             </div>
             
             <div id="study-complete-message" class="hidden text-center py-10">
-                <h2 class="text-3xl font-bold text-green-500">Hoàn thành!</h2>
-                <p class="mt-2 text-slate-500">Bạn đã ôn tập xong tất cả các thẻ trong phiên này.</p>
-                <button id="study-again-btn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Học lại</button>
+                <h2 class="text-3xl font-bold text-green-500">Tuyệt vời!</h2>
+                <p class="mt-2 text-slate-500">Bạn đã hoàn thành tất cả các thẻ cần ôn tập hôm nay.</p>
+                <button id="study-again-btn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Ôn tập lại</button>
             </div>
         </div>
     </template>
@@ -249,11 +270,9 @@
             where, 
             orderBy, 
             serverTimestamp,
-            writeBatch
+            writeBatch,
+            Timestamp
         } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-        // =================================================================
-        // THAY ĐỔI: Import thêm module AI của Firebase
-        // =================================================================
         import { getAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-ai.js";
 
         // Your web app's Firebase configuration
@@ -270,9 +289,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        // =================================================================
-        // THAY ĐỔI: Khởi tạo model Gemini thông qua Firebase AI SDK
-        // =================================================================
         const ai = getAI(app);
         const generativeModel = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 
@@ -293,8 +309,18 @@
         const icons = {
             delete: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
             edit: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>`,
-            google: `<svg class="w-5 h-5 mr-2" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,36.626,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`
+            google: `<svg class="w-5 h-5 mr-2" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,36.626,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`,
+            speaker: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>`
         };
+
+        // --- Text-to-Speech (TTS) UTILITY ---
+        function speakText(text, lang = 'en-US') {
+            if (!text || !('speechSynthesis' in window)) return;
+            speechSynthesis.cancel(); // Stop any previous speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            speechSynthesis.speak(utterance);
+        }
 
         // --- AUTHENTICATION LOGIC ---
         onAuthStateChanged(auth, user => {
@@ -424,7 +450,7 @@
                     <h2 class="text-xl font-bold mb-4">${deck ? 'Chỉnh sửa bộ thẻ' : 'Tạo bộ thẻ mới'}</h2>
                     <form id="deck-form" class="space-y-4">
                         <input type="text" id="deck-name-input" placeholder="Tên bộ thẻ" value="${deck ? deck.name : ''}" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                        <textarea id="deck-desc-input" placeholder="Mô tả (tùy chọn)" rows="3" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${deck ? deck.description : ''}</textarea>
+                        <textarea id="deck-desc-input" placeholder="Mô tả (tùy chọn)" rows="3" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${deck ? (deck.description || '') : ''}</textarea>
                         <div class="flex justify-end gap-2 pt-4">
                             <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
                             <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
@@ -465,9 +491,6 @@
         async function deleteDeck(deckId, deckName) {
             if (!confirm(`Bạn có chắc chắn muốn xóa bộ thẻ "${deckName}" không? Hành động này không thể hoàn tác.`)) return;
             try {
-                // Note: Deleting a document does not delete its subcollections.
-                // For a full MVP, a Cloud Function would be needed to delete all cards in the subcollection.
-                // For this client-side MVP, we'll just delete the deck document.
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId));
                 renderDecksView();
             } catch (error) {
@@ -514,8 +537,8 @@
                         cardItem.className = 'bg-white dark:bg-slate-800 rounded-xl shadow p-4 flex items-center justify-between';
                         cardItem.innerHTML = `
                             <div class="grid grid-cols-2 gap-4 flex-1">
-                                <p class="truncate">${card.front}</p>
-                                <p class="truncate text-slate-500">${card.back}</p>
+                                <p class="font-medium truncate">${card.term || card.front}</p>
+                                <p class="truncate text-slate-500">${card.short_definition || card.back}</p>
                             </div>
                             <div class="flex gap-2 ml-4">
                                 <button class="edit-card-btn p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">${icons.edit}</button>
@@ -537,16 +560,32 @@
             const modalId = 'card-modal';
             const modalHTML = `
                 <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
-                <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
-                    <h2 class="text-xl font-bold mb-4">${card ? 'Chỉnh sửa thẻ' : 'Thêm thẻ mới'}</h2>
-                    <form id="card-form" class="space-y-4">
-                        <textarea id="card-front-input" placeholder="Mặt trước" rows="4" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card ? card.front : ''}</textarea>
-                        <textarea id="card-back-input" placeholder="Mặt sau" rows="4" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card ? card.back : ''}</textarea>
-                        <div class="flex justify-end gap-2 pt-4">
-                            <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
-                        </div>
-                    </form>
+                <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50">
+                    <div class="p-6">
+                        <h2 class="text-xl font-bold mb-4">${card ? 'Chỉnh sửa thẻ' : 'Thêm thẻ mới'}</h2>
+                        <form id="card-form" class="space-y-3">
+                            <div>
+                                <label class="text-sm font-medium">Thuật ngữ / Mặt trước</label>
+                                <input id="card-term-input" type="text" placeholder="Ví dụ: Photosynthesis" value="${card?.term || card?.front || ''}" required class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium">Định nghĩa ngắn / Mặt sau</label>
+                                <input id="card-short-def-input" type="text" placeholder="Ví dụ: Quá trình cây xanh tạo ra năng lượng" value="${card?.short_definition || card?.back || ''}" required class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium">Giải thích chi tiết (hỗ trợ Markdown)</label>
+                                <textarea id="card-detail-input" placeholder="Dùng ## cho tiêu đề, * cho danh sách..." rows="5" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card?.detailed_explanation || ''}</textarea>
+                            </div>
+                             <div>
+                                <label class="text-sm font-medium">Câu ví dụ (hỗ trợ Markdown, mỗi ví dụ một dòng)</label>
+                                <textarea id="card-example-input" placeholder="Dùng **text** để in đậm. Mỗi ví dụ trên một dòng." rows="3" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">${card?.examples?.map(e => e.sentence).join('\n') || ''}</textarea>
+                            </div>
+                            <div class="flex justify-end gap-2 pt-4">
+                                <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             `;
             modalContainer.innerHTML = modalHTML;
@@ -557,16 +596,32 @@
 
             document.getElementById('card-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const front = document.getElementById('card-front-input').value.trim();
-                const back = document.getElementById('card-back-input').value.trim();
-                if (!front || !back) return;
+                const examples = document.getElementById('card-example-input').value.trim().split('\n').filter(line => line).map(line => ({ sentence: line, translation: '' }));
 
-                const cardData = { front, back };
+                const cardData = {
+                    term: document.getElementById('card-term-input').value.trim(),
+                    short_definition: document.getElementById('card-short-def-input').value.trim(),
+                    detailed_explanation: document.getElementById('card-detail-input').value.trim(),
+                    examples: examples,
+                    front: document.getElementById('card-term-input').value.trim(),
+                    back: document.getElementById('card-short-def-input').value.trim(),
+                };
+
+                if (!cardData.term || !cardData.short_definition) return;
+
                 try {
                     if (card) {
-                        await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', card.id), cardData);
+                        const existingData = (await getDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', card.id))).data();
+                        await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', card.id), {
+                            ...existingData,
+                            ...cardData
+                        });
                     } else {
                         cardData.createdAt = serverTimestamp();
+                        cardData.nextReviewDate = Timestamp.now();
+                        cardData.interval = 0;
+                        cardData.easeFactor = 2.5;
+                        cardData.repetitions = 0;
                         await addDoc(collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards'), cardData);
                     }
                     closeModal();
@@ -589,72 +644,175 @@
             }
         }
         
-        // --- STUDY MODE ---
+        // --- STUDY MODE (SRS IMPLEMENTATION) ---
         async function renderStudyView(deckId) {
             mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
             try {
+                const today = Timestamp.now();
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
-                const cardsSnapshot = await getDocs(cardsRef);
-                const allCards = cardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const q = query(cardsRef, where('nextReviewDate', '<=', today));
+                const cardsSnapshot = await getDocs(q);
+                
+                let studyQueue = cardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                if (allCards.length === 0) {
-                    alert("Bộ thẻ này trống. Hãy thêm thẻ để bắt đầu học.");
-                    renderCardsView(deckId);
+                if (studyQueue.length === 0) {
+                     mainContent.innerHTML = `
+                        <div class="text-center py-10">
+                            <h2 class="text-3xl font-bold text-green-500">Tuyệt vời!</h2>
+                            <p class="mt-2 text-slate-500">Bạn đã hoàn thành tất cả các thẻ cần ôn tập hôm nay.</p>
+                            <button id="back-btn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Quay lại</button>
+                        </div>
+                    `;
+                    document.getElementById('back-btn').addEventListener('click', () => renderCardsView(deckId));
                     return;
                 }
+                
+                studyQueue = studyQueue.sort(() => Math.random() - 0.5);
 
                 mainContent.innerHTML = '';
                 const template = document.getElementById('template-study-view');
                 mainContent.appendChild(template.content.cloneNode(true));
 
-                let remainingCards = [...allCards].sort(() => Math.random() - 0.5); // Shuffle cards
-                let knownCards = [];
                 let currentCardIndex = 0;
+                let repeatQueue = [];
+                const initialQueueSize = studyQueue.length;
 
-                const studyCard = document.getElementById('study-card');
-                const frontText = document.getElementById('study-card-front-text');
-                const backText = document.getElementById('study-card-back-text');
-                const counter = document.getElementById('study-counter');
-                const progressBar = document.getElementById('study-progress-bar');
-                const controls = document.getElementById('study-controls');
-                const completeMessage = document.getElementById('study-complete-message');
+                const studyCardEl = document.getElementById('study-card');
+                const frontTextEl = document.getElementById('study-card-front-text');
+                const frontSpeakerBtn = studyCardEl.querySelector('.study-card-front .speak-btn');
+                const backContentEl = document.getElementById('study-card-back-content');
+                const counterEl = document.getElementById('study-counter');
+                const progressBarEl = document.getElementById('study-progress-bar');
+                const showAnswerControlEl = document.getElementById('show-answer-control');
+                const srsControlsEl = document.getElementById('srs-controls');
+                const completeMessageEl = document.getElementById('study-complete-message');
+
+                frontSpeakerBtn.innerHTML = icons.speaker;
 
                 function showNextCard() {
-                    if (currentCardIndex >= remainingCards.length) {
-                        // Session complete
-                        controls.classList.add('hidden');
-                        completeMessage.classList.remove('hidden');
-                        studyCard.classList.add('hidden');
-                        counter.textContent = "Hoàn thành!";
-                        return;
+                    if (studyQueue.length === 0) {
+                        if (repeatQueue.length > 0) {
+                            studyQueue = [...repeatQueue];
+                            repeatQueue = [];
+                            currentCardIndex = 0; // Reset index for the repeat queue
+                        } else {
+                            showAnswerControlEl.classList.add('hidden');
+                            srsControlsEl.classList.add('hidden');
+                            completeMessageEl.classList.remove('hidden');
+                            studyCardEl.parentElement.classList.add('hidden');
+                            counterEl.textContent = "Hoàn thành!";
+                            progressBarEl.style.width = '100%';
+                            return;
+                        }
                     }
 
-                    const card = remainingCards[currentCardIndex];
-                    studyCard.classList.remove('is-flipped');
-                    frontText.textContent = card.front;
-                    backText.textContent = card.back;
+                    const card = studyQueue[currentCardIndex];
+                    studyCardEl.classList.remove('is-flipped');
+                    showAnswerControlEl.classList.remove('hidden');
+                    srsControlsEl.classList.add('hidden');
                     
-                    const totalInSession = remainingCards.length + knownCards.length;
-                    const completedInSession = knownCards.length;
-                    counter.textContent = `Thẻ ${completedInSession + 1} / ${totalInSession}`;
-                    progressBar.style.width = `${(completedInSession / totalInSession) * 100}%`;
+                    const term = card.term || card.front;
+                    frontTextEl.innerHTML = DOMPurify.sanitize(term);
+                    frontSpeakerBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        speakText(term);
+                    };
+
+                    const examplesHTML = (card.examples || []).map(ex => `
+                        <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
+                            <div class="flex-1">
+                                <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
+                                <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
+                            </div>
+                            <button class="speak-btn ml-4 text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
+                                ${icons.speaker}
+                            </button>
+                        </div>
+                    `).join('');
+
+                    const backHTML = `
+                        <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
+                            <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
+                            ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
+                            <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
+                                ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
+                                ${examplesHTML}
+                            </div>
+                        </div>
+                    `;
+                    backContentEl.innerHTML = backHTML;
+                    
+                    const cardsDone = initialQueueSize - studyQueue.length - repeatQueue.length;
+                    counterEl.textContent = `Còn lại: ${studyQueue.length + repeatQueue.length}`;
+                    progressBarEl.style.width = `${(cardsDone / initialQueueSize) * 100}%`;
+                }
+                
+                function calculateSrs(card, rating) {
+                    let { repetitions, easeFactor, interval } = card;
+                    repetitions = repetitions || 0;
+                    easeFactor = easeFactor || 2.5;
+                    interval = interval || 0;
+
+                    if (rating < 3) {
+                        repetitions = 0;
+                        interval = 1;
+                        repeatQueue.push(card);
+                    } else {
+                        if (repetitions === 0) interval = 1;
+                        else if (repetitions === 1) interval = 6;
+                        else interval = Math.round(interval * easeFactor);
+                        repetitions += 1;
+                    }
+
+                    easeFactor = easeFactor + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02));
+                    if (easeFactor < 1.3) easeFactor = 1.3;
+
+                    const newNextReviewDate = new Date();
+                    newNextReviewDate.setDate(newNextReviewDate.getDate() + interval);
+
+                    return { repetitions, easeFactor, interval, nextReviewDate: Timestamp.fromDate(newNextReviewDate) };
                 }
 
-                function handleReview(isKnown) {
-                    if (isKnown) {
-                        knownCards.push(remainingCards[currentCardIndex]);
-                        remainingCards.splice(currentCardIndex, 1);
-                    } else {
-                        // Move card to the end of the queue
-                        const cardToRepeat = remainingCards.splice(currentCardIndex, 1)[0];
-                        remainingCards.push(cardToRepeat);
+                async function handleSrsRating(rating) {
+                    const card = studyQueue[0];
+                    const newSrsData = calculateSrs(card, rating);
+                    
+                    try {
+                        const cardRef = doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', card.id);
+                        await updateDoc(cardRef, newSrsData);
+                    } catch(error) {
+                        console.error("Error updating card SRS data:", error);
                     }
+                    
+                    studyQueue.shift();
                     showNextCard();
                 }
 
-                studyCard.addEventListener('click', () => studyCard.classList.toggle('is-flipped'));
-                document.getElementById('needs-review-btn').addEventListener('click', () => handleReview(false));
-                document.getElementById('known-btn').addEventListener('click', () => handleReview(true));
+                document.getElementById('show-answer-btn').addEventListener('click', () => {
+                    studyCardEl.classList.add('is-flipped');
+                    showAnswerControlEl.classList.add('hidden');
+                    srsControlsEl.classList.remove('hidden');
+                });
+                
+                srsControlsEl.querySelectorAll('.srs-rating-btn').forEach(btn => {
+                    btn.addEventListener('click', () => handleSrsRating(parseInt(btn.dataset.rating)));
+                });
+                
+                backContentEl.addEventListener('click', (e) => {
+                    const speakButton = e.target.closest('.speak-btn');
+                    if(speakButton) {
+                        e.stopPropagation();
+                        speakText(speakButton.dataset.text);
+                    }
+                });
+
+                studyCardEl.addEventListener('click', () => {
+                    if (!studyCardEl.classList.contains('is-flipped')) {
+                         document.getElementById('show-answer-btn').click();
+                    }
+                });
+
+
                 document.getElementById('exit-study-btn').addEventListener('click', () => renderCardsView(deckId));
                 document.getElementById('study-again-btn').addEventListener('click', () => renderStudyView(deckId));
 
@@ -666,11 +824,12 @@
             }
         }
 
+
         // --- AI CARD GENERATION ---
         function renderAiDeckModal() {
             const modalId = 'ai-deck-modal';
             let generatedCards = [];
-            let state = 'input'; // 'input', 'loading', 'review'
+            let state = 'input';
 
             function render() {
                 let contentHTML = '';
@@ -678,7 +837,7 @@
                     case 'input':
                         contentHTML = `
                             <h2 class="text-xl font-bold mb-4">Tạo bộ thẻ với AI</h2>
-                            <p class="text-sm text-slate-500 mb-4">Nhập một chủ đề, và AI sẽ tạo ra một bộ thẻ cho bạn. Ví dụ: "15 từ vựng tiếng Anh về du lịch", "Các đời tổng thống Hoa Kỳ", "Các hằng số vật lý cơ bản".</p>
+                            <p class="text-sm text-slate-500 mb-4">Nhập một chủ đề, và AI sẽ tạo ra một bộ thẻ chi tiết cho bạn. Ví dụ: "15 từ vựng tiếng Anh về du lịch", "Các đời tổng thống Hoa Kỳ", "Các hằng số vật lý cơ bản".</p>
                             <form id="ai-deck-form">
                                 <textarea id="ai-topic-input" placeholder="Nhập chủ đề..." rows="3" required class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
                                 <div class="flex justify-end gap-2 pt-4">
@@ -705,8 +864,8 @@
                                     <div class="bg-white dark:bg-slate-800 p-2 rounded-md flex items-start gap-2">
                                         <input type="checkbox" id="card-check-${index}" checked class="mt-1">
                                         <label for="card-check-${index}" class="flex-1 grid grid-cols-2 gap-2 text-sm">
-                                            <span class="font-medium">${card.front}</span>
-                                            <span class="text-slate-500">${card.back}</span>
+                                            <span class="font-medium">${card.term || card.front}</span>
+                                            <span class="text-slate-500">${card.short_definition || card.back}</span>
                                         </label>
                                     </div>
                                 `).join('')}
@@ -739,20 +898,49 @@
                 render();
 
                 try {
-                    // =================================================================
-                    // THAY ĐỔI: Sử dụng Firebase AI SDK thay vì fetch
-                    // =================================================================
-                    const prompt = `Tạo một danh sách các flashcard về chủ đề: "${topic}". Trả về một mảng JSON hợp lệ của các đối tượng. Mỗi đối tượng phải có hai khóa: "front" (mặt trước của thẻ) và "back" (mặt sau của thẻ). Không thêm bất kỳ văn bản giải thích nào khác, chỉ có mảng JSON.`;
+                    const prompt = `
+                        Tạo một danh sách các flashcard về chủ đề: "${topic}".
+                        Trả về một mảng JSON hợp lệ của các đối tượng.
+                        Bọc toàn bộ mảng JSON trong một khối mã JSON duy nhất, bắt đầu bằng \`\`\`json và kết thúc bằng \`\`\`.
+                        TUYỆT ĐỐI không thêm bất kỳ văn bản giải thích nào bên ngoài khối mã đó.
+
+                        Đối với MỖI đối tượng flashcard trong mảng, hãy sử dụng cấu trúc sau:
+                        {
+                          "term": "Thuật ngữ chính hoặc câu hỏi (văn bản thuần túy).",
+                          "pronunciation": "Phiên âm (nếu có, nếu không thì để chuỗi rỗng \\"\\").",
+                          "short_definition": "Một định nghĩa NGẮN GỌN, súc tích (văn bản thuần túy).",
+                          "detailed_explanation": "Một giải thích CHI TIẾT hơn, sử dụng định dạng Markdown (ví dụ: dùng ## cho tiêu đề, * cho danh sách) để trình bày rõ ràng.",
+                          "examples": [
+                              {
+                                  "sentence": "Một câu ví dụ thực tế đầu tiên, dùng **Markdown** để in đậm thuật ngữ chính trong câu.",
+                                  "translation": "Bản dịch tiếng Việt của câu ví dụ đầu tiên."
+                              },
+                              {
+                                  "sentence": "Một câu ví dụ thực tế thứ hai (nếu có).",
+                                  "translation": "Bản dịch tiếng Việt của câu ví dụ thứ hai."
+                              }
+                          ]
+                        }
+                    `;
                     
                     const result = await generativeModel.generateContent(prompt);
                     const response = result.response;
                     const text = response.text();
                     
-                    // Sanitize the response to get only the JSON array
-                    const jsonMatch = text.match(/\[[\s\S]*\]/);
-                    if (!jsonMatch) throw new Error("AI did not return a valid JSON array.");
+                    // FIXED: Removed incorrect escaping of backticks
+                    const jsonBlockRegex = /```json([\s\S]*?)```/
+                    const jsonMatch = text.match(jsonBlockRegex);
+                    if (!jsonMatch || !jsonMatch[1]) {
+                         // Fallback to simpler regex if the ```json block is not found
+                        const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
+                        if (!simplerJsonMatch) {
+                             throw new Error("AI không trả về một mảng JSON hợp lệ.");
+                        }
+                        generatedCards = JSON.parse(simplerJsonMatch[0]);
+                    } else {
+                        generatedCards = JSON.parse(jsonMatch[1]);
+                    }
                     
-                    generatedCards = JSON.parse(jsonMatch[0]);
                     state = 'review';
                     render();
                 } catch (error) {
@@ -772,7 +960,16 @@
                 generatedCards.forEach((card, index) => {
                     const checkbox = document.getElementById(`card-check-${index}`);
                     if (checkbox && checkbox.checked) {
-                        selectedCards.push(card);
+                        const newCard = {
+                            ...card,
+                            front: card.term || card.front,
+                            back: card.short_definition || card.back,
+                            nextReviewDate: Timestamp.now(),
+                            interval: 0,
+                            easeFactor: 2.5,
+                            repetitions: 0
+                        };
+                        selectedCards.push(newCard);
                     }
                 });
 
@@ -782,7 +979,6 @@
                 }
 
                 try {
-                    // Create new deck
                     const deckRef = await addDoc(collection(db, 'users', currentUser.uid, 'decks'), {
                         name: deckName,
                         description: `Được tạo bởi AI về chủ đề: "${document.getElementById('ai-topic-input')?.value.trim() || 'không rõ'}"`,
@@ -790,7 +986,6 @@
                         cardCount: selectedCards.length
                     });
 
-                    // Add cards in a batch
                     const batch = writeBatch(db);
                     const cardsColRef = collection(db, 'users', currentUser.uid, 'decks', deckRef.id, 'cards');
                     selectedCards.forEach(card => {
