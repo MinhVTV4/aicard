@@ -181,6 +181,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
+    <!-- =========== AUTHENTICATION VIEW =========== -->
     <div id="auth-view" class="flex items-center justify-center min-h-screen">
         <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
             <div>
@@ -188,12 +189,15 @@
                 <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Đăng nhập để bắt đầu học</p>
             </div>
             <div id="auth-forms">
-                </div>
+                <!-- Auth forms will be rendered here by JS -->
+            </div>
             <p id="auth-error" class="text-center text-sm text-red-500 min-h-[20px]"></p>
         </div>
     </div>
 
+    <!-- =========== MAIN APPLICATION VIEW =========== -->
     <div id="app-view" class="hidden">
+        <!-- App Header -->
         <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -201,8 +205,10 @@
                         <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
                     </div>
                     <div class="flex items-center gap-4">
+                        <!-- Dark Mode Toggle Button -->
                         <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
-                            </button>
+                            <!-- Icon will be dynamically set by JS -->
+                        </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
                     </div>
@@ -210,15 +216,34 @@
             </div>
         </header>
 
+        <!-- Main Content Area -->
         <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            </main>
+            <!-- This area will be dynamically populated with Decks, Cards, or Study view -->
+        </main>
     </div>
 
+    <!-- =========== MODALS =========== -->
+    <!-- Generic Modal Container -->
     <div id="modal-container">
+        <!-- The AI Explanation Modal will now be a permanent part of the DOM, hidden by default -->
+        <div id="ai-explanation-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40 hidden"></div>
+        <div id="ai-explanation-modal" class="bottom-sheet">
+            <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+                <h2 id="ai-explanation-title" class="text-xl font-bold text-slate-800 dark:text-slate-200">Giải thích chuyên sâu</h2>
+                <button id="close-ai-explanation-btn" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="ai-explanation-content" class="bottom-sheet-content prose dark:prose-invert max-w-none">
+                <!-- Content will be loaded here -->
+            </div>
         </div>
+    </div>
 
+    <!-- =========== TOAST CONTAINER =========== -->
     <div id="toast-container"></div>
 
+    <!-- =========== TEMPLATES (for cloning) =========== -->
     <template id="template-decks-view">
         <div id="decks-view">
             <div class="flex justify-between items-center mb-6">
@@ -232,7 +257,8 @@
                 </div>
             </div>
             <div id="deck-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                </div>
+                <!-- Deck cards will be rendered here -->
+            </div>
         </div>
     </template>
     
@@ -261,7 +287,8 @@
                 </div>
             </div>
             <div id="card-list" class="space-y-3">
-                </div>
+                <!-- Card items will be rendered here -->
+            </div>
         </div>
     </template>
 
@@ -306,6 +333,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
+            
+            <button id="ai-explanation-button-preview" class="mt-4 w-full max-w-md py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                Giải thích AI
+            </button>
 
             <button id="start-study-from-preview-btn" class="mt-6 w-full max-w-md py-3 px-6 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -360,6 +392,11 @@
                  <button data-rating="4" class="srs-rating-btn py-3 px-4 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105">Dễ</button>
             </div>
             
+            <button id="ai-explanation-button-study" class="mt-4 w-full max-w-md py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                Giải thích AI
+            </button>
+
             <div id="study-complete-message" class="hidden text-center py-10">
                 <h2 class="text-3xl font-bold text-green-500">Tuyệt vời!</h2>
                 <p class="mt-2 text-slate-500">Bạn đã hoàn thành tất cả các thẻ cần ôn tập hôm nay.</p>
@@ -368,20 +405,23 @@
         </div>
     </template>
 
-    <template id="template-ai-explanation-modal">
-        <div id="ai-explanation-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
-        <div id="ai-explanation-modal" class="bottom-sheet">
-            <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
-                <h2 id="ai-explanation-title" class="text-xl font-bold text-slate-800 dark:text-slate-200">Giải thích chuyên sâu</h2>
-                <button id="close-ai-explanation-btn" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div id="ai-explanation-content" class="bottom-sheet-content prose dark:prose-invert max-w-none">
-                </div>
+    <!-- The AI Explanation Modal is now a permanent part of the DOM, hidden by default -->
+    <!-- Removed template tag as it's now directly in the DOM -->
+    <div id="ai-explanation-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40 hidden"></div>
+    <div id="ai-explanation-modal" class="bottom-sheet">
+        <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+            <h2 id="ai-explanation-title" class="text-xl font-bold text-slate-800 dark:text-slate-200">Giải thích chuyên sâu</h2>
+            <button id="close-ai-explanation-btn" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
-    </template>
+        <div id="ai-explanation-content" class="bottom-sheet-content prose dark:prose-invert max-w-none">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
 
+
+    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -414,7 +454,7 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyAIJ6_MeavfS37IJDXRfIshV7T09HY0zMs",
+            apiKey: "AIzaSyAIJ6_MeavfS37IJDXRfIshV7T09HY0zMs", // Ensure this is a valid API key if running outside Canvas
             authDomain: "aieng-500da.firebaseapp.com",
             projectId: "aieng-500da",
             storageBucket: "aieng-500da.firebasestorage.app",
@@ -456,9 +496,17 @@
         const authError = document.getElementById('auth-error');
         const userDisplayName = document.getElementById('user-display-name');
         const mainContent = document.getElementById('main-content');
-        const modalContainer = document.getElementById('modal-container');
+        const modalContainer = document.getElementById('modal-container'); // This now contains the permanent modal structure
         const toastContainer = document.getElementById('toast-container');
         const themeToggleButton = document.getElementById('theme-toggle');
+
+        // References to the permanently existing AI explanation modal elements
+        const aiExplanationModal = document.getElementById('ai-explanation-modal');
+        const aiExplanationOverlay = document.getElementById('ai-explanation-overlay');
+        const closeAiExplanationBtn = document.getElementById('close-ai-explanation-btn');
+        const aiExplanationTitle = document.getElementById('ai-explanation-title');
+        const aiExplanationContent = document.getElementById('ai-explanation-content');
+
 
         // --- SVG ICONS ---
         const icons = {
@@ -539,7 +587,7 @@
             if (buttonContainer) {
                 currentPlayingButtonContainer = buttonContainer;
                 buttonContainer.querySelector('.speak-btn')?.classList.add('hidden');
-                buttonContainer.querySelector('.pause-btn')?.classList.remove('hidden');
+                buttonContainer.querySelector('.pause-btn')?.classList.add('hidden');
                 buttonContainer.querySelector('.resume-btn')?.classList.add('hidden');
             }
 
@@ -1176,7 +1224,7 @@
         }
         
         // --- COMMON CARD RENDERING LOGIC FOR PREVIEW/STUDY BACK FACE ---
-        function renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl, currentPlayingButtonContainerRef) {
+        function renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl) {
             const examplesHTML = (card.examples || []).map(ex => `
                 <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
                     <div class="flex-1">
@@ -1214,9 +1262,8 @@
                         ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
                         ${examplesHTML}
                     </div>
-                    <button id="ai-deep-dive-btn" class="mt-4 w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-all">Giải thích AI</button>
-                </div>
-            `;
+                    </div>
+            `; // Removed ai-deep-dive-btn from here
             backContentEl.innerHTML = backHTML;
             
             const speedSelect = backContentEl.querySelector('#example-speed-select');
@@ -1246,13 +1293,6 @@
                     resumeSpeech();
                 });
             });
-
-            const aiDeepDiveBtn = backContentEl.querySelector('#ai-deep-dive-btn');
-            if (aiDeepDiveBtn) {
-                aiDeepDiveBtn.addEventListener('click', () => {
-                    renderAiExplanationModal(card, deckLanguage);
-                });
-            }
         }
 
 
@@ -1305,6 +1345,7 @@
                 const prevBtn = document.getElementById('prev-card-btn');
                 const nextBtn = document.getElementById('next-card-btn');
                 const flipBtn = document.getElementById('flip-preview-card-btn');
+                const aiExplanationButtonPreview = document.getElementById('ai-explanation-button-preview'); // New button reference
 
                 frontSpeakBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1321,8 +1362,22 @@
                     resumeSpeech();
                 });
 
+                // New event listener for the external AI explanation button
+                aiExplanationButtonPreview.addEventListener('click', () => {
+                    const card = previewCards[currentPreviewCardIndex];
+                    renderAiExplanationModal(card, deckLanguage);
+                });
+
 
                 function showPreviewCard() {
+                    speechSynthesis.cancel(); // Stop any ongoing speech for previous card
+                    if (currentPlayingButtonContainer) { // Reset UI for previous card's speaker buttons
+                        currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
+                        currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                        currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+                        currentPlayingButtonContainer = null;
+                    }
+
                     const card = previewCards[currentPreviewCardIndex];
                     previewCardEl.classList.remove('is-flipped'); 
                     
@@ -1438,6 +1493,8 @@
                 const showAnswerControlEl = document.getElementById('show-answer-control');
                 const srsControlsEl = document.getElementById('srs-controls');
                 const completeMessageEl = document.getElementById('study-complete-message');
+                const aiExplanationButtonStudy = document.getElementById('ai-explanation-button-study'); // New button reference
+
 
                 frontSpeakBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1454,15 +1511,21 @@
                     resumeSpeech();
                 });
 
+                // New event listener for the external AI explanation button
+                aiExplanationButtonStudy.addEventListener('click', () => {
+                    const card = studyQueue[currentCardIndex];
+                    renderAiExplanationModal(card, deckLanguage);
+                });
+
                 function showNextCard() {
                     speechSynthesis.cancel(); 
                     
-                    if (frontSpeakerControlDiv) {
-                        frontSpeakerControlDiv.querySelector('.speak-btn')?.classList.remove('hidden');
-                        frontSpeakerControlDiv.querySelector('.pause-btn')?.classList.add('hidden');
-                        frontSpeakerControlDiv.querySelector('.resume-btn')?.classList.add('hidden');
+                    if (currentPlayingButtonContainer) { // Reset UI for previous card's speaker buttons
+                        currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
+                        currentPlayingButtonContainer.querySelector('.pause-btn')?.classList.add('hidden');
+                        currentPlayingButtonContainer.querySelector('.resume-btn')?.classList.add('hidden');
+                        currentPlayingButtonContainer = null;
                     }
-                    currentPlayingButtonContainer = null; 
 
                     if (studyQueue.length === 0) {
                         if (repeatQueue.length > 0) {
@@ -1527,7 +1590,7 @@
 
                 async function handleSrsRating(rating) {
                     speechSynthesis.cancel(); 
-                    const card = studyQueue[currentCardIndex]; // Use currentCardIndex, not studyQueue[0]
+                    const card = studyQueue[currentCardIndex]; 
                     const newSrsData = calculateSrs(card, rating);
                     
                     try {
@@ -1538,14 +1601,13 @@
                         showToast('Lỗi khi cập nhật dữ liệu học thẻ.', 'error');
                     }
                     
-                    studyQueue.splice(currentCardIndex, 1); // Remove current card from queue
-                    // If we removed the last card, reset index, otherwise keep it for next card
+                    studyQueue.splice(currentCardIndex, 1); 
                     if (currentCardIndex >= studyQueue.length && studyQueue.length > 0) {
                         currentCardIndex = 0; 
                     } else if (studyQueue.length === 0 && repeatQueue.length > 0) {
-                        currentCardIndex = 0; // Prepare for repeat queue
+                        currentCardIndex = 0; 
                     } else if (studyQueue.length === 0) {
-                        currentCardIndex = 0; // No more cards, for display purposes
+                        currentCardIndex = 0; 
                     }
 
 
@@ -1728,7 +1790,7 @@
                     if (aiDeckLanguage === 'vi-VN') {
                         prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Việt, hãy đảm bảo các trường "term", "pronunciation" (nếu có), "short_definition", "detailed_explanation", và "examples.sentence" đều bằng Tiếng Việt. Trường "examples.translation" phải bằng Tiếng Anh.`;
                     } else if (aiDeckLanguage === 'en-US') { 
-                        prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Anh, hãy đảm bustling các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng Tiếng Anh. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
+                        prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Anh, hãy đảm bảo các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng Tiếng Anh. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
                     } else { 
                         const selectedOption = Array.from(aiDeckLanguageInput.options).find(opt => opt.value === aiDeckLanguage);
                         const targetLanguageName = selectedOption ? selectedOption.text.split('(')[0].trim() : aiDeckLanguage; 
@@ -1759,6 +1821,8 @@
                         }
                     }
 
+                    // Refined filtering: A card is valid if it has either a term/front OR a short_definition/back.
+                    // We will ensure both are populated during save.
                     generatedCards = parsedJson.filter(card => 
                         (card.term && card.term.trim() !== '') || 
                         (card.front && card.front.trim() !== '') ||
@@ -1805,26 +1869,31 @@
                 generatedCards.forEach((card, index) => {
                     const checkbox = document.getElementById(`card-check-${index}`);
                     if (checkbox && checkbox.checked) {
-                        const newCard = {
-                            term: String(card.term || card.front || '').trim(), 
-                            front: String(card.term || card.front || '').trim(), 
-                            short_definition: String(card.short_definition || card.back || '').trim(), 
-                            back: String(card.short_definition || card.back || '').trim(), 
-                            detailed_explanation: String(card.detailed_explanation || '').trim(),
-                            pronunciation: String(card.pronunciation || '').trim(),
-                            examples: Array.isArray(card.examples) ? card.examples.map(ex => ({
-                                sentence: String(ex.sentence || '').trim(),
-                                translation: String(ex.translation || '').trim()
-                            })).filter(ex => ex.sentence !== '') : [],
-                            nextReviewDate: Timestamp.now(),
-                            interval: 0,
-                            easeFactor: 2.5,
-                            repetitions: 0
-                        };
-                        if (newCard.term && newCard.short_definition) {
+                        // Ensure 'term' and 'short_definition' are populated from 'front'/'back' if missing
+                        const term = String(card.term || card.front || '').trim();
+                        const short_definition = String(card.short_definition || card.back || '').trim();
+
+                        // Only add if at least one side has content
+                        if (term || short_definition) {
+                            const newCard = {
+                                term: term,
+                                front: term, // Ensure front is also populated
+                                short_definition: short_definition,
+                                back: short_definition, // Ensure back is also populated
+                                detailed_explanation: String(card.detailed_explanation || '').trim(),
+                                pronunciation: String(card.pronunciation || '').trim(),
+                                examples: Array.isArray(card.examples) ? card.examples.map(ex => ({
+                                    sentence: String(ex.sentence || '').trim(),
+                                    translation: String(ex.translation || '').trim()
+                                })).filter(ex => ex.sentence !== '') : [],
+                                nextReviewDate: Timestamp.now(),
+                                interval: 0,
+                                easeFactor: 2.5,
+                                repetitions: 0
+                            };
                             selectedCards.push(newCard);
                         } else {
-                            console.warn("Skipping malformed generated card during save:", card);
+                            console.warn("Skipping empty generated card during save:", card);
                         }
                     }
                 });
@@ -1886,70 +1955,99 @@
 
         // --- AI Explanation Modal Logic ---
         async function renderAiExplanationModal(card, deckLanguage) {
-            const modalId = 'ai-explanation-modal';
-            
-            modalContainer.innerHTML = ''; 
-            const template = document.getElementById('template-ai-explanation-modal');
-            const clonedContent = template.content.cloneNode(true);
-            modalContainer.appendChild(clonedContent); 
+            // Get references to the permanently existing AI explanation modal elements
+            // These were declared globally and should already be available.
+            // No need to clone template or append here.
 
-            const aiExplanationModal = document.getElementById(modalId);
-            const aiExplanationOverlay = document.getElementById(`${modalId}-overlay`);
-            const closeBtn = document.getElementById('close-ai-explanation-btn');
-            const titleEl = document.getElementById('ai-explanation-title');
-            const contentEl = document.getElementById('ai-explanation-content');
-
-            titleEl.textContent = `Giải thích chuyên sâu về: "${card.term || card.front}"`;
-            contentEl.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-10">
-                    <div class="spinner"></div>
-                    <p class="mt-4 text-slate-500 dark:text-slate-400">AI đang tạo giải thích... Vui lòng chờ.</p>
-                </div>
-            `;
-            aiExplanationModal.classList.add('is-visible'); 
-
-            const closeModal = () => {
-                aiExplanationModal.classList.remove('is-visible'); 
-                aiExplanationOverlay.classList.add('hidden'); 
-                setTimeout(() => { 
-                    modalContainer.innerHTML = '';
-                }, 300); 
-            };
-
-            aiExplanationOverlay.addEventListener('click', closeModal);
-            closeBtn.addEventListener('click', closeModal);
-
-            try {
-                const prompt = `Giải thích chuyên sâu về thuật ngữ "${card.term || card.front}" và định nghĩa ngắn "${card.short_definition || card.back}".
-                                Trình bày chi tiết, sử dụng định dạng Markdown, bao gồm các tiêu đề phụ (##), danh sách (*), và các ví dụ nếu cần.
-                                Ngôn ngữ của giải thích phải là ${deckLanguage === 'vi-VN' ? 'Tiếng Việt' : 'Tiếng Anh'}.
-                                TUYỆT ĐỐI chỉ trả về nội dung Markdown, không thêm bất kỳ văn bản giải thích nào khác bên ngoài.`;
-
-                const result = await generativeModel.generateContent(prompt);
-                const responseText = result.response.text();
-
-                let explanationContent = responseText;
-                const markdownBlockRegex = /```(?:markdown|md)?\s*([\s\S]*?)```/;
-                const markdownMatch = responseText.match(markdownBlockRegex);
-                if (markdownMatch && markdownMatch[1]) {
-                    explanationContent = markdownMatch[1];
-                } else {
-                    explanationContent = explanationContent
-                        .replace(/^```json[\s\S]*?```\s*/, '') 
-                        .replace(/^\s*Đây là giải thích chuyên sâu:\s*/i, '') 
-                        .trim();
-                }
-
-                const renderedHtml = marked.parse(explanationContent);
-                contentEl.innerHTML = DOMPurify.sanitize(renderedHtml);
-
-            } catch (error) {
-                console.error("Error generating AI explanation:", error);
-                contentEl.innerHTML = `
-                    <p class="text-red-500 dark:text-red-400 text-center">Lỗi khi tạo giải thích AI. Vui lòng thử lại sau.</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">Chi tiết lỗi: ${error.message}</p>
+            // Set initial state and show modal
+            // Check if elements are truly available before proceeding
+            if (aiExplanationModal && aiExplanationOverlay && closeAiExplanationBtn && aiExplanationTitle && aiExplanationContent) {
+                aiExplanationTitle.textContent = `Giải thích chuyên sâu về: "${card.term || card.front}"`;
+                aiExplanationContent.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-10">
+                        <div class="spinner"></div>
+                        <p class="mt-4 text-slate-500 dark:text-slate-400">AI đang tạo giải thích... Vui lòng chờ.</p>
+                    </div>
                 `;
-                showToast("Lỗi khi tạo giải thích AI.", "error");
+                aiExplanationOverlay.classList.remove('hidden'); // Show overlay
+                aiExplanationModal.classList.add('is-visible'); // Trigger slide-up animation
+
+                // Setup event listeners for closing the modal
+                const closeModal = () => {
+                    aiExplanationModal.classList.remove('is-visible'); 
+                    aiExplanationOverlay.classList.add('hidden'); 
+                    // No need for setTimeout to clear modalContainer.innerHTML as it's permanent now.
+                };
+
+                aiExplanationOverlay.addEventListener('click', closeModal);
+                closeAiExplanationBtn.addEventListener('click', closeModal);
+
+                try {
+                    let prompt;
+                    if (deckLanguage === 'vi-VN') {
+                        // Lời nhắc cho tiếng Việt (giải thích tổng quát)
+                        prompt = `Bạn là một chuyên gia về kiến thức tổng quát và có khả năng giải thích các khái niệm một cách sâu sắc, rõ ràng, và phù hợp với ngữ cảnh.
+                                  Hãy giải thích chuyên sâu về:
+                                  - Thuật ngữ/Từ khóa: "${card.term || card.front}"
+                                  - Định nghĩa ngắn: "${card.short_definition || card.back}"
+                                  
+                                  Dựa vào thuật ngữ và định nghĩa, hãy xác định ngữ cảnh của nó (ví dụ: là một từ vựng, một thuật ngữ khoa học, một địa điểm lịch sử, một khái niệm trừu tượng, v.v.) và cung cấp giải thích phù hợp với ngữ cảnh đó.
+                                  
+                                  Trình bày chi tiết, sử dụng định dạng Markdown để dễ đọc (ví dụ: dùng ## cho tiêu đề phụ, * cho danh sách, **text** để in đậm).
+                                  
+                                  QUAN TRỌNG: Toàn bộ giải thích phải bằng TIẾNG VIỆT. TUYỆT ĐỐI chỉ trả về nội dung Markdown, không thêm bất kỳ văn bản giải thích nào khác bên ngoài.`;
+                    } else {
+                        // Lời nhắc cho ngữ cảnh học ngoại ngữ (ví dụ: tiếng Anh)
+                        prompt = `Bạn là một gia sư ngôn ngữ chuyên nghiệp. Tôi đang học từ vựng/thuật ngữ tiếng ${deckLanguage === 'en-US' ? 'Anh' : 'khác'}.
+                                  Hãy giúp tôi hiểu sâu và học cách sử dụng từ/thuật ngữ sau:
+                                  - Từ/Thuật ngữ: "${card.term || card.front}"
+                                  - Định nghĩa ngắn: "${card.short_definition || card.back}"
+                                  
+                                  Giải thích chi tiết bằng TIẾNG VIỆT, bao gồm:
+                                  1.  **Cách học và ghi nhớ từ này:** Gợi ý về phát âm (nếu cần), cách liên tưởng, hoặc các mẹo học tập hiệu quả.
+                                  2.  **Các cách dùng và ngữ cảnh phổ biến:** Minh họa các cấu trúc ngữ pháp, collocations (kết hợp từ) hoặc các tình huống sử dụng thực tế.
+                                  3.  **Hội thoại hoặc câu ví dụ:** Cung cấp 2-3 câu ví dụ hoặc một đoạn hội thoại ngắn trong đó từ/thuật ngữ này được sử dụng tự nhiên.
+                                  4.  **Bài tập nhỏ để luyện tập:** Đề xuất 1-2 dạng bài tập đơn giản (ví dụ: điền vào chỗ trống, đặt câu) để tôi có thể thực hành ngay.
+                                  
+                                  Sử dụng định dạng Markdown để trình bày rõ ràng (ví dụ: dùng ## cho tiêu đề phụ, * cho danh sách, **text** để in đậm).
+                                  
+                                  QUAN TRỌNG: Toàn bộ giải thích phải bằng TIẾNG VIỆT. TUYỆT ĐỐI chỉ trả về nội dung Markdown, không thêm bất kỳ văn bản giải thích nào khác bên ngoài.`;
+                    }
+
+
+                    const result = await generativeModel.generateContent(prompt);
+                    const responseText = result.response.text();
+
+                    let explanationContent = responseText;
+                    const markdownBlockRegex = /```(?:markdown|md)?\s*([\s\S]*?)```/;
+                    const markdownMatch = responseText.match(markdownBlockRegex);
+                    if (markdownMatch && markdownMatch[1]) {
+                        explanationContent = markdownMatch[1];
+                    } else {
+                        explanationContent = explanationContent
+                            .replace(/^```json[\s\S]*?```\s*/, '') 
+                            .replace(/^\s*Đây là giải thích chuyên sâu:\s*/i, '') 
+                            .trim();
+                    }
+
+                    const renderedHtml = marked.parse(explanationContent);
+                    aiExplanationContent.innerHTML = DOMPurify.sanitize(renderedHtml); // Update content directly
+
+                } catch (error) {
+                    console.error("Error generating AI explanation:", error);
+                    aiExplanationContent.innerHTML = `
+                        <p class="text-red-500 dark:text-red-400 text-center">Lỗi khi tạo giải thích AI. Vui lòng thử lại sau.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">Chi tiết lỗi: ${error.message}</p>
+                    `;
+                    showToast("Lỗi khi tạo giải thích AI.", "error");
+                }
+            } else {
+                // This error log should ideally not happen with the new structure
+                console.error("Error: AI explanation modal elements not found during initialization.");
+                showToast("Lỗi hiển thị giải thích AI. Vui lòng thử lại.", "error");
+                // Ensure overlay is hidden if something went wrong during initial setup
+                aiExplanationOverlay.classList.add('hidden'); 
+                aiExplanationModal.classList.remove('is-visible');
             }
         }
 
