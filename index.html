@@ -145,11 +145,42 @@
             90% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(20px); }
         }
+
+        /* Bottom Sheet Specific Styles */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 90vh; /* Max height to leave some space at the top */
+            background-color: white;
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            box-shadow: 0 -10px 25px -5px rgb(0 0 0 / 0.1), 0 -8px 10px -6px rgb(0 0 0 / 0.1);
+            transform: translateY(100%); /* Start off-screen */
+            transition: transform 0.3s ease-out;
+            z-index: 50; /* Above regular modals */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark .bottom-sheet {
+            background-color: #1e293b; /* slate-800 */
+        }
+
+        .bottom-sheet.is-visible {
+            transform: translateY(0); /* Slide into view */
+        }
+
+        .bottom-sheet-content {
+            flex-grow: 1; /* Allow content to take available space */
+            overflow-y: auto; /* Scrollable content */
+            padding: 1.5rem;
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <!-- =========== AUTHENTICATION VIEW =========== -->
     <div id="auth-view" class="flex items-center justify-center min-h-screen">
         <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
             <div>
@@ -157,15 +188,12 @@
                 <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Đăng nhập để bắt đầu học</p>
             </div>
             <div id="auth-forms">
-                <!-- Auth forms will be rendered here by JS -->
-            </div>
+                </div>
             <p id="auth-error" class="text-center text-sm text-red-500 min-h-[20px]"></p>
         </div>
     </div>
 
-    <!-- =========== MAIN APPLICATION VIEW =========== -->
     <div id="app-view" class="hidden">
-        <!-- App Header -->
         <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -173,10 +201,8 @@
                         <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <!-- Dark Mode Toggle Button -->
                         <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
-                            <!-- Icon will be dynamically set by JS -->
-                        </button>
+                            </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
                     </div>
@@ -184,37 +210,29 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- This area will be dynamically populated with Decks, Cards, or Study view -->
-        </main>
+            </main>
     </div>
 
-    <!-- =========== MODALS =========== -->
-    <!-- Generic Modal Container -->
     <div id="modal-container">
-        <!-- Modals will be rendered here by JS -->
-    </div>
+        </div>
 
-    <!-- =========== TOAST CONTAINER =========== -->
     <div id="toast-container"></div>
 
-    <!-- =========== TEMPLATES (for cloning) =========== -->
     <template id="template-decks-view">
         <div id="decks-view">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-3xl font-bold">Bộ thẻ của bạn</h1>
                 <div class="flex gap-2">
                     <button id="ai-create-deck-btn" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                         Tạo với AI
                     </button>
                     <button id="create-deck-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">Tạo bộ thẻ mới</button>
                 </div>
             </div>
             <div id="deck-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Deck cards will be rendered here -->
-            </div>
+                </div>
         </div>
     </template>
     
@@ -243,8 +261,7 @@
                 </div>
             </div>
             <div id="card-list" class="space-y-3">
-                <!-- Card items will be rendered here -->
-            </div>
+                </div>
         </div>
     </template>
 
@@ -351,7 +368,20 @@
         </div>
     </template>
 
-    <!-- Firebase SDK -->
+    <template id="template-ai-explanation-modal">
+        <div id="ai-explanation-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
+        <div id="ai-explanation-modal" class="bottom-sheet">
+            <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+                <h2 id="ai-explanation-title" class="text-xl font-bold text-slate-800 dark:text-slate-200">Giải thích chuyên sâu</h2>
+                <button id="close-ai-explanation-btn" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="ai-explanation-content" class="bottom-sheet-content prose dark:prose-invert max-w-none">
+                </div>
+        </div>
+    </template>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -463,8 +493,6 @@
             }
 
             const utterance = new SpeechSynthesisUtterance(text);
-            // Sanitize text before speaking to avoid issues with special characters, though DOMPurify is for HTML
-            // For TTS, basic trimming and checking for empty string is usually sufficient.
             utterance.text = String(text).trim(); 
             if (utterance.text === '') {
                 console.warn("Text is empty after trimming, not speaking.");
@@ -472,18 +500,16 @@
                 return null;
             }
 
-            // Warn if text is excessively long, as it can sometimes cause synthesis failures
             if (utterance.text.length > 1000) {
                 console.warn("Text is very long, might cause TTS issues:", utterance.text.length, "characters.");
                 showToast("Văn bản quá dài để đọc, có thể gặp lỗi.", "info");
             }
 
             utterance.lang = lang;
-            utterance.rate = rate; // Set the rate
+            utterance.rate = rate;
 
             let selectedVoice = null;
 
-            // 1. Try to find the specific voice by URI
             if (voiceURI) {
                 selectedVoice = availableVoices.find(v => v.voiceURI === voiceURI);
                 if (!selectedVoice) {
@@ -492,12 +518,9 @@
                 }
             }
             
-            // 2. If no specific voice or not found, try to find a suitable voice by language
             if (!selectedVoice) { 
-                // Prioritize local voices if available
                 selectedVoice = availableVoices.find(v => v.lang === lang && v.localService);
                 if (!selectedVoice) {
-                    // Fallback to any voice matching the language
                     selectedVoice = availableVoices.find(v => v.lang === lang);
                 }
                 
@@ -510,12 +533,9 @@
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
             } else {
-                // If still no voice, the browser will use its absolute default, which might not match the language.
-                // We should inform the user more clearly.
                 showToast(`Không tìm thấy giọng đọc nào phù hợp cho ngôn ngữ "${lang}". Chức năng đọc có thể không hoạt động hoặc sử dụng giọng mặc định không mong muốn của hệ thống.`, 'error', 7000);
             }
 
-            // Store button container for UI updates
             if (buttonContainer) {
                 currentPlayingButtonContainer = buttonContainer;
                 buttonContainer.querySelector('.speak-btn')?.classList.add('hidden');
@@ -537,11 +557,10 @@
 
             utterance.onerror = (event) => {
                 console.error('SpeechSynthesisUtterance.onerror - Lỗi khi phát âm thanh:', event);
-                // Log the full event object for more details
                 console.log("Full TTS error event:", event); 
 
                 let errorMessage = 'Đã xảy ra lỗi khi phát âm thanh.';
-                if (event.error) { // Check if event.error property exists
+                if (event.error) { 
                     if (event.error === 'network') {
                         errorMessage = 'Lỗi mạng khi tải giọng đọc. Vui lòng kiểm tra kết nối internet.';
                     } else if (event.error === 'synthesis-failed') {
@@ -551,18 +570,16 @@
                     } else if (event.error === 'audio-busy') {
                         errorMessage = 'Thiết bị âm thanh đang bận. Vui lòng thử lại.';
                     } else if (event.error === 'interrupted') {
-                        // This error is common with the stability workaround, so we can make it a less severe 'info' toast
                         errorMessage = 'Quá trình đọc bị gián đoạn (thường do ổn định hệ thống).';
-                        showToast(errorMessage, 'info'); // Change to info
+                        showToast(errorMessage, 'info'); 
                     } else {
                         errorMessage = `Lỗi TTS: ${event.error}.`;
                     }
                 } else {
-                    // Generic error, often happens when no specific error type is provided by the browser
                     errorMessage = 'Đã xảy ra lỗi không xác định khi phát âm thanh. Có thể do thiếu giọng đọc hoặc lỗi hệ thống.';
                 }
 
-                if (event.error !== 'interrupted') { // Only show error toast for non-interrupted errors
+                if (event.error !== 'interrupted') { 
                     showToast(errorMessage, 'error');
                 }
                 
@@ -576,7 +593,7 @@
             };
 
             speechSynthesis.speak(utterance);
-            currentPlayingUtterance = utterance; // Store the current utterance
+            currentPlayingUtterance = utterance; 
             return utterance;
         }
 
@@ -650,14 +667,14 @@
         speechSynthesis.onvoiceschanged = () => {
             availableVoices = speechSynthesis.getVoices();
             console.log("Available voices updated:", availableVoices.map(v => `${v.name} (${v.lang}) - Local: ${v.localService}`));
-            // If the deck modal is open, re-populate voice dropdown
             const deckModal = document.getElementById('deck-modal');
-            if (deckModal && deckModal.parentNode === modalContainer) { // Check if it's currently in the DOM
+            if (deckModal && modalContainer.contains(deckModal)) { 
                 const deckLanguageInput = document.getElementById('deck-language-input');
                 const deckVoiceInput = document.getElementById('deck-voice-input');
                 const noVoiceMessage = document.getElementById('no-voice-message');
-                if (deckLanguageInput && deckVoiceInput && noVoiceMessage) {
-                    populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage);
+                const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message');
+                if (deckLanguageInput && deckVoiceInput && noVoiceMessage && ttsNotSupportedMessage) {
+                    populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
                 }
             }
         };
@@ -758,7 +775,6 @@
             }
         });
 
-        // Add event listener for theme toggle after DOM is loaded and element exists
         document.addEventListener('DOMContentLoaded', () => {
             if (themeToggleButton) {
                 themeToggleButton.addEventListener('click', toggleTheme);
@@ -809,11 +825,11 @@
                             }
                         });
                         deckCard.querySelector('.edit-deck-btn').addEventListener('click', (e) => {
-                            e.stopPropagation(); // Prevent card click event
+                            e.stopPropagation(); 
                             renderDeckModal(deck);
                         });
                         deckCard.querySelector('.delete-deck-btn').addEventListener('click', (e) => {
-                            e.stopPropagation(); // Prevent card click event
+                            e.stopPropagation(); 
                             deleteDeck(deck.id, deck.name);
                         });
                         deckListEl.appendChild(deckCard);
@@ -849,7 +865,6 @@
                                 <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
                                 <option value="ko-KR">Tiếng Hàn</option>
                                 <option value="ja-JP">Tiếng Nhật</option>
-                                <!-- Add more languages as needed -->
                             </select>
                         </div>
                         <div id="deck-voice-selection-container" class="space-y-2">
@@ -880,8 +895,6 @@
             const noVoiceMessage = document.getElementById('no-voice-message');
             const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message');
 
-
-            // Function to populate voice dropdown based on selected language
             const populateVoiceDropdownInModal = (langInput, voiceInput, msgElement, ttsNotSupportedMsg) => {
                 if (!('speechSynthesis' in window)) {
                     voiceInput.innerHTML = '<option value="">-- TTS không được hỗ trợ --</option>';
@@ -890,17 +903,14 @@
                     ttsNotSupportedMsg.classList.remove('hidden');
                     return;
                 }
-                ttsNotSupportedMsg.classList.add('hidden'); // Hide if TTS is supported
+                ttsNotSupportedMsg.classList.add('hidden'); 
 
                 const selectedLang = langInput.value;
-                // Filter and sort voices: prioritize local voices, then by name
                 const filteredVoices = availableVoices
                     .filter(v => v.lang === selectedLang)
                     .sort((a, b) => {
-                        // Prioritize local voices
                         if (a.localService && !b.localService) return -1;
                         if (!a.localService && b.localService) return 1;
-                        // Then sort by name
                         return a.name.localeCompare(b.name);
                     });
                 
@@ -919,29 +929,23 @@
                     voiceInput.disabled = true;
                 }
 
-                // Set selected voice if editing deck
                 if (deck && deck.voiceURI) {
-                    // Check if the saved voice URI still exists in the filtered list
                     const savedVoiceExists = filteredVoices.some(v => v.voiceURI === deck.voiceURI);
                     if (savedVoiceExists) {
                         voiceInput.value = deck.voiceURI;
                     } else {
-                        // If saved voice is not available, try to select a default for the language or reset
                         voiceInput.value = ''; 
                         showToast(`Giọng đọc đã lưu (${deck.voiceURI}) không có sẵn. Vui lòng chọn lại.`, 'info', 5000);
                     }
                 } else {
-                    voiceInput.value = ''; // Reset if no voice set or language changed
+                    voiceInput.value = ''; 
                 }
             };
 
-            // Initial population and event listener
             populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
             deckLanguageInput.addEventListener('change', () => populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage));
 
-            // Set the language input value if editing an existing deck
             deckLanguageInput.value = deck?.language || 'en-US';
-            // Re-populate voices after setting language to ensure correct voices are shown for the pre-selected language
             populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
 
 
@@ -953,8 +957,8 @@
 
                 const name = document.getElementById('deck-name-input').value.trim();
                 const description = document.getElementById('deck-desc-input').value.trim();
-                const language = deckLanguageInput.value; // Get selected language
-                const voiceURI = deckVoiceInput.value || null; // Get selected voice URI
+                const language = deckLanguageInput.value; 
+                const voiceURI = deckVoiceInput.value || null; 
 
                 if (!name) {
                     showToast('Tên bộ thẻ không được để trống.', 'error');
@@ -963,7 +967,7 @@
                     return;
                 }
 
-                const deckData = { name, description, language, voiceURI }; // Include language and voiceURI
+                const deckData = { name, description, language, voiceURI }; 
                 try {
                     if (deck) {
                         await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deck.id), deckData);
@@ -989,7 +993,6 @@
         async function deleteDeck(deckId, deckName) {
             if (!confirm(`Bạn có chắc chắn muốn xóa bộ thẻ "${deckName}" không? Hành động này không thể hoàn tác.`)) return;
             try {
-                // First, delete all cards within the deck
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
                 const cardsSnapshot = await getDocs(cardsRef);
                 const batch = writeBatch(db);
@@ -998,7 +1001,6 @@
                 });
                 await batch.commit();
 
-                // Then, delete the deck itself
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId));
                 showToast(`Đã xóa bộ thẻ "${deckName}" thành công!`, 'success');
                 renderDecksView();
@@ -1027,7 +1029,7 @@
                 
                 document.getElementById('back-to-decks-btn').addEventListener('click', renderDecksView);
                 document.getElementById('add-card-btn').addEventListener('click', () => renderCardModal(deckId));
-                document.getElementById('preview-deck-btn').addEventListener('click', () => renderPreviewView(deckId)); // New: Preview button
+                document.getElementById('preview-deck-btn').addEventListener('click', () => renderPreviewView(deckId)); 
                 document.getElementById('study-deck-btn').addEventListener('click', () => renderStudyView(deckId));
 
 
@@ -1070,7 +1072,6 @@
 
         function renderCardModal(deckId, card = null) {
             const modalId = 'card-modal';
-            // Removed language input from card modal
             const modalHTML = `
                 <div id="${modalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
                 <div id="${modalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50">
@@ -1174,6 +1175,87 @@
             }
         }
         
+        // --- COMMON CARD RENDERING LOGIC FOR PREVIEW/STUDY BACK FACE ---
+        function renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl, currentPlayingButtonContainerRef) {
+            const examplesHTML = (card.examples || []).map(ex => `
+                <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
+                    <div class="flex-1">
+                        <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
+                        <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
+                    </div>
+                    <div class="flex items-center gap-2 example-audio-controls">
+                        <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-text="${ex.sentence}">
+                            ${icons.speaker}
+                        </button>
+                        <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            ${icons.pause}
+                        </button>
+                        <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            ${icons.play_audio}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            const backHTML = `
+                <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
+                    <div class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        <span>Tốc độ đọc ví dụ:</span>
+                        <select id="example-speed-select" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            <option value="0.75">0.75x (Chậm)</option>
+                            <option value="1.0" ${currentSpeed === 1.0 ? 'selected' : ''}>1.0x (Bình thường)</option>
+                            <option value="1.25">1.25x (Nhanh)</option>
+                            <option value="1.5">1.5x (Rất nhanh)</option>
+                        </select>
+                    </div>
+                    <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
+                    ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
+                    <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
+                        ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
+                        ${examplesHTML}
+                    </div>
+                    <button id="ai-deep-dive-btn" class="mt-4 w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-all">Giải thích AI</button>
+                </div>
+            `;
+            backContentEl.innerHTML = backHTML;
+            
+            const speedSelect = backContentEl.querySelector('#example-speed-select');
+            speedSelect.value = currentSpeed.toString(); 
+            speedSelect.addEventListener('change', (e) => {
+                currentSpeed = parseFloat(e.target.value);
+            });
+
+            backContentEl.querySelectorAll('.example-audio-controls').forEach(controlDiv => {
+                const speakButton = controlDiv.querySelector('.speak-btn');
+                const pauseButton = controlDiv.querySelector('.pause-btn');
+                const resumeButton = controlDiv.querySelector('.resume-btn');
+
+                speakButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const textToSpeak = speakButton.dataset.text;
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
+                });
+
+                pauseButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    pauseSpeech();
+                });
+
+                resumeButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resumeSpeech();
+                });
+            });
+
+            const aiDeepDiveBtn = backContentEl.querySelector('#ai-deep-dive-btn');
+            if (aiDeepDiveBtn) {
+                aiDeepDiveBtn.addEventListener('click', () => {
+                    renderAiExplanationModal(card, deckLanguage);
+                });
+            }
+        }
+
+
         // --- PREVIEW MODE ---
         async function renderPreviewView(deckId) {
             mainContent.innerHTML = `<div class="h-96 skeleton"></div>`;
@@ -1182,11 +1264,11 @@
                 const deckSnap = await getDoc(deckRef);
                 if (!deckSnap.exists()) throw new Error("Deck not found");
                 const deckData = deckSnap.data();
-                const deckLanguage = deckData.language || 'en-US'; // Get deck language
-                const deckVoiceURI = deckData.voiceURI || null; // Get deck voice URI
+                const deckLanguage = deckData.language || 'en-US'; 
+                const deckVoiceURI = deckData.voiceURI || null; 
 
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
-                const q = query(cardsRef, orderBy('createdAt', 'asc')); // Order by creation for consistent preview
+                const q = query(cardsRef, orderBy('createdAt', 'asc')); 
                 const cardsSnapshot = await getDocs(q);
                 
                 const previewCards = cardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1209,11 +1291,11 @@
                 mainContent.appendChild(template.content.cloneNode(true));
 
                 let currentPreviewCardIndex = 0;
-                let currentSpeed = 1.0; // Default speed for preview mode
+                let currentSpeed = 1.0; 
 
                 const previewCardEl = document.getElementById('preview-card');
                 const frontTextEl = document.getElementById('preview-card-front-text');
-                const frontSpeakerControlDiv = previewCardEl.querySelector('.study-card-front .flex'); // Select the flex container for buttons
+                const frontSpeakerControlDiv = previewCardEl.querySelector('.study-card-front .flex'); 
                 const frontSpeakBtn = frontSpeakerControlDiv.querySelector('.speak-btn');
                 const frontPauseBtn = frontSpeakerControlDiv.querySelector('.pause-btn');
                 const frontResumeBtn = frontSpeakerControlDiv.querySelector('.resume-btn');
@@ -1224,7 +1306,6 @@
                 const nextBtn = document.getElementById('next-card-btn');
                 const flipBtn = document.getElementById('flip-preview-card-btn');
 
-                // Initial setup for the main speaker buttons
                 frontSpeakBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const card = previewCards[currentPreviewCardIndex];
@@ -1243,85 +1324,12 @@
 
                 function showPreviewCard() {
                     const card = previewCards[currentPreviewCardIndex];
-                    previewCardEl.classList.remove('is-flipped'); // Always show front first
+                    previewCardEl.classList.remove('is-flipped'); 
                     
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
                     
-                    // Update main speaker button's text to speak
-                    frontSpeakBtn.dataset.text = term; // This is a helper, but actual speakText uses current card's term.
-
-                    const examplesHTML = (card.examples || []).map(ex => `
-                        <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
-                            <div class="flex-1">
-                                <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
-                                <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
-                            </div>
-                            <div class="flex items-center gap-2 example-audio-controls">
-                                <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-text="${ex.sentence}">
-                                    ${icons.speaker}
-                                </button>
-                                <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
-                                    ${icons.pause}
-                                </button>
-                                <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
-                                    ${icons.play_audio}
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
-
-                    const backHTML = `
-                        <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
-                            <div class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                <span>Tốc độ đọc ví dụ:</span>
-                                <select id="example-speed-select" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                    <option value="0.75">0.75x (Chậm)</option>
-                                    <option value="1.0" ${currentSpeed === 1.0 ? 'selected' : ''}>1.0x (Bình thường)</option>
-                                    <option value="1.25">1.25x (Nhanh)</option>
-                                    <option value="1.5">1.5x (Rất nhanh)</option>
-                                </select>
-                            </div>
-                            <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
-                            ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
-                            <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
-                                ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
-                                ${examplesHTML}
-                            </div>
-                        </div>
-                    `;
-                    backContentEl.innerHTML = backHTML;
-                    
-                    // Add event listeners for speed select and example speak/pause/resume buttons
-                    const speedSelect = document.getElementById('example-speed-select');
-                    speedSelect.value = currentSpeed.toString(); // Ensure dropdown reflects current speed
-                    speedSelect.addEventListener('change', (e) => {
-                        currentSpeed = parseFloat(e.target.value);
-                    });
-
-                    backContentEl.querySelectorAll('.example-audio-controls').forEach(controlDiv => {
-                        const speakButton = controlDiv.querySelector('.speak-btn');
-                        const pauseButton = controlDiv.querySelector('.pause-btn');
-                        const resumeButton = controlDiv.querySelector('.resume-btn');
-
-                        speakButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const textToSpeak = speakButton.dataset.text;
-                            // Pass the specific controlDiv to speakText to manage its buttons
-                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
-                        });
-
-                        pauseButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            pauseSpeech();
-                        });
-
-                        resumeButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            resumeSpeech();
-                        });
-                    });
-
+                    renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl);
 
                     counterEl.textContent = `${currentPreviewCardIndex + 1}/${previewCards.length}`;
                     prevBtn.disabled = currentPreviewCardIndex === 0;
@@ -1329,7 +1337,7 @@
                 }
                 
                 prevBtn.addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop any speech when navigating
+                    speechSynthesis.cancel(); 
                     if (currentPreviewCardIndex > 0) {
                         currentPreviewCardIndex--;
                         showPreviewCard();
@@ -1337,7 +1345,7 @@
                 });
 
                 nextBtn.addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop any speech when navigating
+                    speechSynthesis.cancel(); 
                     if (currentPreviewCardIndex < previewCards.length - 1) {
                         currentPreviewCardIndex++;
                         showPreviewCard();
@@ -1345,24 +1353,23 @@
                 });
 
                 flipBtn.addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop any speech when flipping
+                    speechSynthesis.cancel(); 
                     previewCardEl.classList.toggle('is-flipped');
                 });
 
                 previewCardEl.addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop any speech when clicking card
-                    // Only flip if not already flipped (to prevent double flip on initial click)
+                    speechSynthesis.cancel(); 
                     if (!previewCardEl.classList.contains('is-flipped')) {
                         previewCardEl.classList.add('is-flipped');
                     }
                 });
 
                 document.getElementById('exit-preview-btn').addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop speech on exit
+                    speechSynthesis.cancel(); 
                     renderCardsView(deckId);
                 });
                 document.getElementById('start-study-from-preview-btn').addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop speech on starting study
+                    speechSynthesis.cancel(); 
                     renderStudyView(deckId);
                 });
 
@@ -1384,8 +1391,8 @@
                 const deckSnap = await getDoc(deckRef);
                 if (!deckSnap.exists()) throw new Error("Deck not found");
                 const deckData = deckSnap.data();
-                const deckLanguage = deckData.language || 'en-US'; // Get deck language
-                const deckVoiceURI = deckData.voiceURI || null; // Get deck voice URI
+                const deckLanguage = deckData.language || 'en-US'; 
+                const deckVoiceURI = deckData.voiceURI || null; 
 
                 const today = Timestamp.now();
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
@@ -1416,11 +1423,11 @@
                 let currentCardIndex = 0;
                 let repeatQueue = [];
                 const initialQueueSize = studyQueue.length;
-                let currentSpeed = 1.0; // Default speed for study mode
+                let currentSpeed = 1.0; 
 
                 const studyCardEl = document.getElementById('study-card');
                 const frontTextEl = document.getElementById('study-card-front-text');
-                const frontSpeakerControlDiv = studyCardEl.querySelector('.study-card-front .flex'); // Select the flex container for buttons
+                const frontSpeakerControlDiv = studyCardEl.querySelector('.study-card-front .flex'); 
                 const frontSpeakBtn = frontSpeakerControlDiv.querySelector('.speak-btn');
                 const frontPauseBtn = frontSpeakerControlDiv.querySelector('.pause-btn');
                 const frontResumeBtn = frontSpeakerControlDiv.querySelector('.resume-btn');
@@ -1432,7 +1439,6 @@
                 const srsControlsEl = document.getElementById('srs-controls');
                 const completeMessageEl = document.getElementById('study-complete-message');
 
-                // Initial setup for the main speaker buttons
                 frontSpeakBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const card = studyQueue[currentCardIndex];
@@ -1449,21 +1455,20 @@
                 });
 
                 function showNextCard() {
-                    speechSynthesis.cancel(); // Stop any speech when moving to next card
+                    speechSynthesis.cancel(); 
                     
-                    // Reset main speaker buttons for the new card
                     if (frontSpeakerControlDiv) {
                         frontSpeakerControlDiv.querySelector('.speak-btn')?.classList.remove('hidden');
                         frontSpeakerControlDiv.querySelector('.pause-btn')?.classList.add('hidden');
                         frontSpeakerControlDiv.querySelector('.resume-btn')?.classList.add('hidden');
                     }
-                    currentPlayingButtonContainer = null; // Clear global reference
+                    currentPlayingButtonContainer = null; 
 
                     if (studyQueue.length === 0) {
                         if (repeatQueue.length > 0) {
                             studyQueue = [...repeatQueue];
                             repeatQueue = [];
-                            currentCardIndex = 0; // Reset index for the repeat queue
+                            currentCardIndex = 0; 
                             showToast('Chuyển sang ôn tập lại các thẻ bạn đánh dấu "Lặp lại" hoặc "Khó".', 'info', 4000);
                         } else {
                             showAnswerControlEl.classList.add('hidden');
@@ -1484,84 +1489,12 @@
                     
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
-                    // No need to re-attach onclick, it's attached once per card view load.
-                    // Instead, just ensure the speakText function is ready to use the correct card data.
 
-                    const examplesHTML = (card.examples || []).map(ex => `
-                        <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
-                            <div class="flex-1">
-                                <p>${DOMPurify.sanitize(marked.parse(ex.sentence || ''))}</p>
-                                <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
-                            </div>
-                            <div class="flex items-center gap-2 example-audio-controls">
-                                <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-text="${ex.sentence}">
-                                    ${icons.speaker}
-                                </button>
-                                <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
-                                    ${icons.pause}
-                                </button>
-                                <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
-                                    ${icons.play_audio}
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
+                    renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl);
 
-                    const backHTML = `
-                        <div class="text-center text-base p-4 overflow-y-auto h-full w-full">
-                            <div class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                <span>Tốc độ đọc ví dụ:</span>
-                                <select id="example-speed-select" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                    <option value="0.75">0.75x (Chậm)</option>
-                                    <option value="1.0" ${currentSpeed === 1.0 ? 'selected' : ''}>1.0x (Bình thường)</option>
-                                    <option value="1.25">1.25x (Nhanh)</option>
-                                    <option value="1.5">1.5x (Rất nhanh)</option>
-                                </select>
-                            </div>
-                            <p class="text-xl font-semibold mb-2">${DOMPurify.sanitize(card.short_definition || card.back)}</p>
-                            ${card.pronunciation ? `<p class="text-sm text-slate-500 mb-4 italic">${DOMPurify.sanitize(card.pronunciation)}</p>` : ''}
-                            <div class="text-left prose prose-sm dark:prose-invert max-w-none mx-auto">
-                                ${card.detailed_explanation ? DOMPurify.sanitize(marked.parse(card.detailed_explanation)) : ''}
-                                ${examplesHTML}
-                            </div>
-                        </div>
-                    `;
-                    backContentEl.innerHTML = backHTML;
-                    
-                    // Add event listeners for speed select and example speak/pause/resume buttons
-                    const speedSelect = document.getElementById('example-speed-select');
-                    speedSelect.value = currentSpeed.toString(); // Ensure dropdown reflects current speed
-                    speedSelect.addEventListener('change', (e) => {
-                        currentSpeed = parseFloat(e.target.value);
-                    });
+                    counterEl.textContent = `${initialQueueSize - studyQueue.length + repeatQueue.length + 1}/${initialQueueSize + repeatQueue.length}`;
+                    progressBarEl.style.width = `${((initialQueueSize - studyQueue.length) / initialQueueSize) * 100}%`;
 
-                    backContentEl.querySelectorAll('.example-audio-controls').forEach(controlDiv => {
-                        const speakButton = controlDiv.querySelector('.speak-btn');
-                        const pauseButton = controlDiv.querySelector('.pause-btn');
-                        const resumeButton = controlDiv.querySelector('.resume-btn');
-
-                        speakButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const textToSpeak = speakButton.dataset.text;
-                            // Pass the specific controlDiv to speakText to manage its buttons
-                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
-                        });
-
-                        pauseButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            pauseSpeech();
-                        });
-
-                        resumeButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            resumeSpeech();
-                        });
-                    });
-
-                    const cardsDone = initialQueueSize - studyQueue.length - repeatQueue.length;
-                    // Adjust counter to show only remaining cards for this session, not total including repeatQueue
-                    counterEl.textContent = `Còn lại: ${studyQueue.length + (repeatQueue.length > 0 ? ` (${repeatQueue.length} lặp lại)` : '')}`;
-                    progressBarEl.style.width = `${(cardsDone / initialQueueSize) * 100}%`;
                 }
                 
                 function calculateSrs(card, rating) {
@@ -1573,7 +1506,6 @@
                     if (rating < 3) {
                         repetitions = 0;
                         interval = 1;
-                        // Only add to repeatQueue if not already there, and if it's not the current card (to prevent duplicates if user clicks "repeat" multiple times without advancing)
                         if (!repeatQueue.some(item => item.id === card.id)) {
                              repeatQueue.push(card);
                         }
@@ -1594,8 +1526,8 @@
                 }
 
                 async function handleSrsRating(rating) {
-                    speechSynthesis.cancel(); // Stop any speech when rating
-                    const card = studyQueue[0];
+                    speechSynthesis.cancel(); 
+                    const card = studyQueue[currentCardIndex]; // Use currentCardIndex, not studyQueue[0]
                     const newSrsData = calculateSrs(card, rating);
                     
                     try {
@@ -1606,7 +1538,17 @@
                         showToast('Lỗi khi cập nhật dữ liệu học thẻ.', 'error');
                     }
                     
-                    studyQueue.shift();
+                    studyQueue.splice(currentCardIndex, 1); // Remove current card from queue
+                    // If we removed the last card, reset index, otherwise keep it for next card
+                    if (currentCardIndex >= studyQueue.length && studyQueue.length > 0) {
+                        currentCardIndex = 0; 
+                    } else if (studyQueue.length === 0 && repeatQueue.length > 0) {
+                        currentCardIndex = 0; // Prepare for repeat queue
+                    } else if (studyQueue.length === 0) {
+                        currentCardIndex = 0; // No more cards, for display purposes
+                    }
+
+
                     showNextCard();
                 }
 
@@ -1621,7 +1563,7 @@
                 });
                 
                 studyCardEl.addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop any speech when clicking card
+                    speechSynthesis.cancel(); 
                     if (!studyCardEl.classList.contains('is-flipped')) {
                          document.getElementById('show-answer-btn').click();
                     }
@@ -1629,11 +1571,11 @@
 
 
                 document.getElementById('exit-study-btn').addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop speech on exit
+                    speechSynthesis.cancel(); 
                     renderCardsView(deckId);
                 });
                 document.getElementById('study-again-btn').addEventListener('click', () => {
-                    speechSynthesis.cancel(); // Stop speech on starting study again
+                    speechSynthesis.cancel(); 
                     renderStudyView(deckId);
                 });
 
@@ -1651,9 +1593,9 @@
         function renderAiDeckModal() {
             const modalId = 'ai-deck-modal';
             let generatedCards = [];
-            let aiTopic = ''; // Store the topic for use in deck description
-            let aiDeckLanguage = 'en-US'; // Default language for AI generated decks
-            let state = 'input'; // 'input', 'loading', 'review'
+            let aiTopic = ''; 
+            let aiDeckLanguage = 'en-US'; 
+            let state = 'input'; 
 
             function render() {
                 let contentHTML = '';
@@ -1725,7 +1667,6 @@
                     </div>
                 `;
                 addEventListeners();
-                // Set default language for AI deck input
                 if (state === 'input') {
                     document.getElementById('ai-deck-language-input').value = aiDeckLanguage;
                 }
@@ -1738,7 +1679,6 @@
                 generateBtn.innerHTML = icons.loading + ' Đang tạo...';
 
                 aiTopic = document.getElementById('ai-topic-input').value.trim();
-                // Capture aiDeckLanguage BEFORE rendering the loading state
                 const aiDeckLanguageInput = document.getElementById('ai-deck-language-input');
                 if (aiDeckLanguageInput) {
                     aiDeckLanguage = aiDeckLanguageInput.value; 
@@ -1759,7 +1699,7 @@
                 }
 
                 state = 'loading';
-                render(); // Re-render to show loading state
+                render(); 
 
                 try {
                     let prompt = `Tạo một danh sách các flashcard về chủ đề: "${aiTopic}".
@@ -1785,14 +1725,13 @@
                           ]
                         }`;
 
-                    // Adjust prompt based on selected language for AI generation
                     if (aiDeckLanguage === 'vi-VN') {
                         prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Việt, hãy đảm bảo các trường "term", "pronunciation" (nếu có), "short_definition", "detailed_explanation", và "examples.sentence" đều bằng Tiếng Việt. Trường "examples.translation" phải bằng Tiếng Anh.`;
-                    } else if (aiDeckLanguage === 'en-US') { // Explicitly handle English
-                        prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Anh, hãy đảm bảo các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng Tiếng Anh. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
-                    } else { // For zh-CN, ko-KR, ja-JP
+                    } else if (aiDeckLanguage === 'en-US') { 
+                        prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Anh, hãy đảm bustling các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng Tiếng Anh. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
+                    } else { 
                         const selectedOption = Array.from(aiDeckLanguageInput.options).find(opt => opt.value === aiDeckLanguage);
-                        const targetLanguageName = selectedOption ? selectedOption.text.split('(')[0].trim() : aiDeckLanguage; // Get only name, e.g., "Tiếng Trung"
+                        const targetLanguageName = selectedOption ? selectedOption.text.split('(')[0].trim() : aiDeckLanguage; 
                         prompt += `\n\nVì ngôn ngữ bộ thẻ là ${targetLanguageName}, hãy đảm bảo các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng ${targetLanguageName}. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
                     }
                     
@@ -1807,7 +1746,6 @@
                     if (jsonMatch && jsonMatch[1]) {
                         parsedJson = JSON.parse(jsonMatch[1]);
                     } else {
-                        // Fallback to simpler regex if the ```json block is not found
                         const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
                         if (simplerJsonMatch) {
                             try {
@@ -1821,11 +1759,6 @@
                         }
                     }
 
-                    // Basic validation for generated cards
-                    if (!Array.isArray(parsedJson) || parsedJson.length === 0) {
-                        throw new Error("AI không tạo ra bất kỳ thẻ nào hoặc định dạng không đúng.");
-                    }
-                    // Filter out cards that are completely empty or malformed
                     generatedCards = parsedJson.filter(card => 
                         (card.term && card.term.trim() !== '') || 
                         (card.front && card.front.trim() !== '') ||
@@ -1838,7 +1771,7 @@
                     }
                     
                     state = 'review';
-                    render(); // Re-render to show review state
+                    render(); 
                 } catch (error) {
                     console.error("AI generation error:", error);
                     let userFriendlyError = "Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.";
@@ -1848,13 +1781,9 @@
                         userFriendlyError = "Hạn mức sử dụng AI đã hết hoặc đang quá tải. Vui lòng thử lại sau vài phút.";
                     }
                     showToast(userFriendlyError, 'error', 7000);
-                    state = 'input'; // Go back to input state
-                    render(); // Re-render to show input state with error message
+                    state = 'input'; 
+                    render(); 
                 } finally {
-                    // This finally block is technically not needed here because render() will take care of button state.
-                    // But keeping it for completeness if render() logic changes.
-                    // generateBtn.disabled = false;
-                    // generateBtn.innerHTML = 'Tạo thẻ';
                 }
             }
 
@@ -1876,17 +1805,13 @@
                 generatedCards.forEach((card, index) => {
                     const checkbox = document.getElementById(`card-check-${index}`);
                     if (checkbox && checkbox.checked) {
-                        // Ensure 'front' and 'back' properties are populated for consistency
                         const newCard = {
-                            ...card,
-                            // Ensure term/front and short_definition/back are explicitly strings and trimmed
                             term: String(card.term || card.front || '').trim(), 
                             front: String(card.term || card.front || '').trim(), 
                             short_definition: String(card.short_definition || card.back || '').trim(), 
                             back: String(card.short_definition || card.back || '').trim(), 
                             detailed_explanation: String(card.detailed_explanation || '').trim(),
                             pronunciation: String(card.pronunciation || '').trim(),
-                            // Ensure examples are an array of objects with sentence and translation
                             examples: Array.isArray(card.examples) ? card.examples.map(ex => ({
                                 sentence: String(ex.sentence || '').trim(),
                                 translation: String(ex.translation || '').trim()
@@ -1896,7 +1821,6 @@
                             easeFactor: 2.5,
                             repetitions: 0
                         };
-                        // Basic validation for essential fields after processing
                         if (newCard.term && newCard.short_definition) {
                             selectedCards.push(newCard);
                         } else {
@@ -1915,9 +1839,8 @@
                 try {
                     const deckRef = await addDoc(collection(db, 'users', currentUser.uid, 'decks'), {
                         name: deckName,
-                        description: `Được tạo bởi AI về chủ đề: "${aiTopic || 'không rõ'}"`, // Use stored aiTopic
-                        language: aiDeckLanguage, // Save AI deck language
-                        // voiceURI for AI generated decks will be null by default, user can edit later
+                        description: `Được tạo bởi AI về chủ đề: "${aiTopic || 'không rõ'}"`, 
+                        language: aiDeckLanguage, 
                         createdAt: serverTimestamp(),
                         cardCount: selectedCards.length
                     });
@@ -1930,9 +1853,9 @@
                     });
                     await batch.commit();
                     
-                    modalContainer.innerHTML = ''; // Close modal
+                    modalContainer.innerHTML = ''; 
                     showToast("Đã lưu bộ thẻ được tạo bởi AI thành công!", 'success');
-                    renderDecksView(); // Refresh deck list
+                    renderDecksView(); 
 
                 } catch (error) {
                     console.error("Error saving AI deck:", error);
@@ -1958,7 +1881,76 @@
                 if (saveForm) saveForm.addEventListener('submit', handleSaveAiDeck);
             }
 
-            render(); // Initial render
+            render(); 
+        }
+
+        // --- AI Explanation Modal Logic ---
+        async function renderAiExplanationModal(card, deckLanguage) {
+            const modalId = 'ai-explanation-modal';
+            
+            modalContainer.innerHTML = ''; 
+            const template = document.getElementById('template-ai-explanation-modal');
+            const clonedContent = template.content.cloneNode(true);
+            modalContainer.appendChild(clonedContent); 
+
+            const aiExplanationModal = document.getElementById(modalId);
+            const aiExplanationOverlay = document.getElementById(`${modalId}-overlay`);
+            const closeBtn = document.getElementById('close-ai-explanation-btn');
+            const titleEl = document.getElementById('ai-explanation-title');
+            const contentEl = document.getElementById('ai-explanation-content');
+
+            titleEl.textContent = `Giải thích chuyên sâu về: "${card.term || card.front}"`;
+            contentEl.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-10">
+                    <div class="spinner"></div>
+                    <p class="mt-4 text-slate-500 dark:text-slate-400">AI đang tạo giải thích... Vui lòng chờ.</p>
+                </div>
+            `;
+            aiExplanationModal.classList.add('is-visible'); 
+
+            const closeModal = () => {
+                aiExplanationModal.classList.remove('is-visible'); 
+                aiExplanationOverlay.classList.add('hidden'); 
+                setTimeout(() => { 
+                    modalContainer.innerHTML = '';
+                }, 300); 
+            };
+
+            aiExplanationOverlay.addEventListener('click', closeModal);
+            closeBtn.addEventListener('click', closeModal);
+
+            try {
+                const prompt = `Giải thích chuyên sâu về thuật ngữ "${card.term || card.front}" và định nghĩa ngắn "${card.short_definition || card.back}".
+                                Trình bày chi tiết, sử dụng định dạng Markdown, bao gồm các tiêu đề phụ (##), danh sách (*), và các ví dụ nếu cần.
+                                Ngôn ngữ của giải thích phải là ${deckLanguage === 'vi-VN' ? 'Tiếng Việt' : 'Tiếng Anh'}.
+                                TUYỆT ĐỐI chỉ trả về nội dung Markdown, không thêm bất kỳ văn bản giải thích nào khác bên ngoài.`;
+
+                const result = await generativeModel.generateContent(prompt);
+                const responseText = result.response.text();
+
+                let explanationContent = responseText;
+                const markdownBlockRegex = /```(?:markdown|md)?\s*([\s\S]*?)```/;
+                const markdownMatch = responseText.match(markdownBlockRegex);
+                if (markdownMatch && markdownMatch[1]) {
+                    explanationContent = markdownMatch[1];
+                } else {
+                    explanationContent = explanationContent
+                        .replace(/^```json[\s\S]*?```\s*/, '') 
+                        .replace(/^\s*Đây là giải thích chuyên sâu:\s*/i, '') 
+                        .trim();
+                }
+
+                const renderedHtml = marked.parse(explanationContent);
+                contentEl.innerHTML = DOMPurify.sanitize(renderedHtml);
+
+            } catch (error) {
+                console.error("Error generating AI explanation:", error);
+                contentEl.innerHTML = `
+                    <p class="text-red-500 dark:text-red-400 text-center">Lỗi khi tạo giải thích AI. Vui lòng thử lại sau.</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">Chi tiết lỗi: ${error.message}</p>
+                `;
+                showToast("Lỗi khi tạo giải thích AI.", "error");
+            }
         }
 
     </script>
