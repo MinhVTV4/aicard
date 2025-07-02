@@ -65,20 +65,24 @@
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
             overflow-y: auto;
+            /* Ensure text color contrasts with new background */
+            color: white; 
         }
+        /* Updated colors for front face */
         .study-card-front {
-            background-color: white;
+            background-color: #22c55e; /* green-500 */
             font-size: 1.75rem;
         }
         .dark .study-card-front {
-            background-color: #1e293b; /* slate-800 */
+            background-color: #166534; /* green-800 */
         }
+        /* Updated colors for back face */
         .study-card-back {
-            background-color: #f0f9ff; /* sky-50 */
+            background-color: #0ea5e9; /* sky-500 */
             transform: rotateY(180deg);
         }
         .dark .study-card-back {
-            background-color: #0c4a6e; /* sky-900 */
+            background-color: #075985; /* sky-800 */
         }
 
         /* Modal transition */
@@ -145,6 +149,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
+    <!-- =========== AUTHENTICATION VIEW =========== -->
     <div id="auth-view" class="flex items-center justify-center min-h-screen">
         <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
             <div>
@@ -152,12 +157,15 @@
                 <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Đăng nhập để bắt đầu học</p>
             </div>
             <div id="auth-forms">
-                </div>
+                <!-- Auth forms will be rendered here by JS -->
+            </div>
             <p id="auth-error" class="text-center text-sm text-red-500 min-h-[20px]"></p>
         </div>
     </div>
 
+    <!-- =========== MAIN APPLICATION VIEW =========== -->
     <div id="app-view" class="hidden">
+        <!-- App Header -->
         <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -165,8 +173,10 @@
                         <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
                     </div>
                     <div class="flex items-center gap-4">
+                        <!-- Dark Mode Toggle Button -->
                         <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
-                            </button>
+                            <!-- Icon will be dynamically set by JS -->
+                        </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
                     </div>
@@ -174,15 +184,22 @@
             </div>
         </header>
 
+        <!-- Main Content Area -->
         <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            </main>
+            <!-- This area will be dynamically populated with Decks, Cards, or Study view -->
+        </main>
     </div>
 
+    <!-- =========== MODALS =========== -->
+    <!-- Generic Modal Container -->
     <div id="modal-container">
-        </div>
+        <!-- Modals will be rendered here by JS -->
+    </div>
 
+    <!-- =========== TOAST CONTAINER =========== -->
     <div id="toast-container"></div>
 
+    <!-- =========== TEMPLATES (for cloning) =========== -->
     <template id="template-decks-view">
         <div id="decks-view">
             <div class="flex justify-between items-center mb-6">
@@ -196,7 +213,8 @@
                 </div>
             </div>
             <div id="deck-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                </div>
+                <!-- Deck cards will be rendered here -->
+            </div>
         </div>
     </template>
     
@@ -225,7 +243,8 @@
                 </div>
             </div>
             <div id="card-list" class="space-y-3">
-                </div>
+                <!-- Card items will be rendered here -->
+            </div>
         </div>
     </template>
 
@@ -243,14 +262,14 @@
                 <div id="preview-card" class="study-card">
                     <div class="study-card-face study-card-front flex-col">
                         <p id="preview-card-front-text" class="text-center"></p>
-                        <div class="flex items-center gap-2 mt-4 text-sky-500">
-                             <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <div class="flex items-center gap-2 mt-4 text-white">
+                             <button class="speak-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors">
                                 ${icons.speaker}
                             </button>
-                            <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            <button class="pause-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors hidden">
                                 ${icons.pause}
                             </button>
-                            <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            <button class="resume-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors hidden">
                                 ${icons.play_audio}
                             </button>
                         </div>
@@ -295,14 +314,14 @@
                 <div id="study-card" class="study-card">
                     <div class="study-card-face study-card-front flex-col">
                         <p id="study-card-front-text" class="text-center"></p>
-                        <div class="flex items-center gap-2 mt-4 text-sky-500">
-                             <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <div class="flex items-center gap-2 mt-4 text-white">
+                             <button class="speak-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors">
                                 ${icons.speaker}
                             </button>
-                            <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            <button class="pause-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors hidden">
                                 ${icons.pause}
                             </button>
-                            <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                            <button class="resume-btn text-white hover:text-gray-200 p-2 rounded-full hover:bg-black/10 transition-colors hidden">
                                 ${icons.play_audio}
                             </button>
                         </div>
@@ -332,6 +351,7 @@
         </div>
     </template>
 
+    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -448,7 +468,14 @@
             utterance.text = String(text).trim(); 
             if (utterance.text === '') {
                 console.warn("Text is empty after trimming, not speaking.");
+                showToast("Không có văn bản để đọc.", "info"); // Inform user if text is empty
                 return null;
+            }
+
+            // Warn if text is excessively long, as it can sometimes cause synthesis failures
+            if (utterance.text.length > 1000) {
+                console.warn("Text is very long, might cause TTS issues:", utterance.text.length, "characters.");
+                showToast("Văn bản quá dài để đọc, có thể gặp lỗi.", "info");
             }
 
             utterance.lang = lang;
@@ -510,22 +537,31 @@
 
             utterance.onerror = (event) => {
                 console.error('SpeechSynthesisUtterance.onerror - Lỗi khi phát âm thanh:', event);
+                // Log the full event object for more details
+                console.log("Full TTS error event:", event); 
+
                 let errorMessage = 'Đã xảy ra lỗi khi phát âm thanh.';
-                if (event.error === 'network') {
-                    errorMessage = 'Lỗi mạng khi tải giọng đọc. Vui lòng kiểm tra kết nối internet.';
-                } else if (event.error === 'synthesis-failed') {
-                    errorMessage = 'Tổng hợp giọng nói thất bại. Có thể do văn bản không hợp lệ hoặc lỗi hệ thống.';
-                } else if (event.error === 'synthesis-unavailable') {
-                    errorMessage = 'Dịch vụ tổng hợp giọng nói không khả dụng. Vui lòng thử lại sau.';
-                } else if (event.error === 'audio-busy') {
-                    errorMessage = 'Thiết bị âm thanh đang bận. Vui lòng thử lại.';
-                } else if (event.error === 'interrupted') {
-                    // This error is common with the stability workaround, so we can make it a less severe 'info' toast
-                    errorMessage = 'Quá trình đọc bị gián đoạn (thường do ổn định hệ thống).';
-                    showToast(errorMessage, 'info'); // Change to info
-                } else if (event.error) {
-                    errorMessage = `Lỗi TTS: ${event.error}.`;
+                if (event.error) { // Check if event.error property exists
+                    if (event.error === 'network') {
+                        errorMessage = 'Lỗi mạng khi tải giọng đọc. Vui lòng kiểm tra kết nối internet.';
+                    } else if (event.error === 'synthesis-failed') {
+                        errorMessage = 'Tổng hợp giọng nói thất bại. Có thể do văn bản không hợp lệ hoặc lỗi hệ thống.';
+                    } else if (event.error === 'synthesis-unavailable') {
+                        errorMessage = 'Dịch vụ tổng hợp giọng nói không khả dụng. Vui lòng thử lại sau.';
+                    } else if (event.error === 'audio-busy') {
+                        errorMessage = 'Thiết bị âm thanh đang bận. Vui lòng thử lại.';
+                    } else if (event.error === 'interrupted') {
+                        // This error is common with the stability workaround, so we can make it a less severe 'info' toast
+                        errorMessage = 'Quá trình đọc bị gián đoạn (thường do ổn định hệ thống).';
+                        showToast(errorMessage, 'info'); // Change to info
+                    } else {
+                        errorMessage = `Lỗi TTS: ${event.error}.`;
+                    }
+                } else {
+                    // Generic error, often happens when no specific error type is provided by the browser
+                    errorMessage = 'Đã xảy ra lỗi không xác định khi phát âm thanh. Có thể do thiếu giọng đọc hoặc lỗi hệ thống.';
                 }
+
                 if (event.error !== 'interrupted') { // Only show error toast for non-interrupted errors
                     showToast(errorMessage, 'error');
                 }
@@ -813,7 +849,8 @@
                                 <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
                                 <option value="ko-KR">Tiếng Hàn</option>
                                 <option value="ja-JP">Tiếng Nhật</option>
-                                </select>
+                                <!-- Add more languages as needed -->
+                            </select>
                         </div>
                         <div id="deck-voice-selection-container" class="space-y-2">
                             <label class="text-sm font-medium">Giọng đọc (tùy chọn)</label>
