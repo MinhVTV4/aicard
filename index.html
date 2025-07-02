@@ -145,7 +145,6 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <!-- =========== AUTHENTICATION VIEW =========== -->
     <div id="auth-view" class="flex items-center justify-center min-h-screen">
         <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
             <div>
@@ -153,15 +152,12 @@
                 <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Đăng nhập để bắt đầu học</p>
             </div>
             <div id="auth-forms">
-                <!-- Auth forms will be rendered here by JS -->
-            </div>
+                </div>
             <p id="auth-error" class="text-center text-sm text-red-500 min-h-[20px]"></p>
         </div>
     </div>
 
-    <!-- =========== MAIN APPLICATION VIEW =========== -->
     <div id="app-view" class="hidden">
-        <!-- App Header -->
         <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -169,10 +165,8 @@
                         <span class="font-bold text-xl text-sky-500">Flashcard AI</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <!-- Dark Mode Toggle Button -->
                         <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
-                            <!-- Icon will be dynamically set by JS -->
-                        </button>
+                            </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
                     </div>
@@ -180,22 +174,15 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- This area will be dynamically populated with Decks, Cards, or Study view -->
-        </main>
+            </main>
     </div>
 
-    <!-- =========== MODALS =========== -->
-    <!-- Generic Modal Container -->
     <div id="modal-container">
-        <!-- Modals will be rendered here by JS -->
-    </div>
+        </div>
 
-    <!-- =========== TOAST CONTAINER =========== -->
     <div id="toast-container"></div>
 
-    <!-- =========== TEMPLATES (for cloning) =========== -->
     <template id="template-decks-view">
         <div id="decks-view">
             <div class="flex justify-between items-center mb-6">
@@ -209,8 +196,7 @@
                 </div>
             </div>
             <div id="deck-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Deck cards will be rendered here -->
-            </div>
+                </div>
         </div>
     </template>
     
@@ -239,8 +225,7 @@
                 </div>
             </div>
             <div id="card-list" class="space-y-3">
-                <!-- Card items will be rendered here -->
-            </div>
+                </div>
         </div>
     </template>
 
@@ -258,9 +243,17 @@
                 <div id="preview-card" class="study-card">
                     <div class="study-card-face study-card-front flex-col">
                         <p id="preview-card-front-text" class="text-center"></p>
-                        <button class="speak-btn mt-4">
-                            <!-- Speaker Icon SVG -->
-                        </button>
+                        <div class="flex items-center gap-2 mt-4 text-sky-500">
+                             <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                ${icons.speaker}
+                            </button>
+                            <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                                ${icons.pause}
+                            </button>
+                            <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                                ${icons.play_audio}
+                            </button>
+                        </div>
                     </div>
                     <div class="study-card-face study-card-back">
                         <div id="preview-card-back-content" class="w-full h-full"></div>
@@ -302,9 +295,17 @@
                 <div id="study-card" class="study-card">
                     <div class="study-card-face study-card-front flex-col">
                         <p id="study-card-front-text" class="text-center"></p>
-                        <button class="speak-btn mt-4">
-                            <!-- Speaker Icon SVG -->
-                        </button>
+                        <div class="flex items-center gap-2 mt-4 text-sky-500">
+                             <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                ${icons.speaker}
+                            </button>
+                            <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                                ${icons.pause}
+                            </button>
+                            <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
+                                ${icons.play_audio}
+                            </button>
+                        </div>
                     </div>
                     <div class="study-card-face study-card-back">
                         <div id="study-card-back-content" class="w-full h-full"></div>
@@ -331,7 +332,6 @@
         </div>
     </template>
 
-    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -424,7 +424,7 @@
         };
 
         // --- Text-to-Speech (TTS) UTILITY ---
-        function speakText(text, lang = 'en-US', rate = 1.0, voiceURI = null, onEndCallback = null) {
+        function speakText(text, lang = 'en-US', rate = 1.0, voiceURI = null, onEndCallback = null, buttonContainer = null) {
             if (!text || !('speechSynthesis' in window)) {
                 console.warn("SpeechSynthesis not supported or text is empty.");
                 showToast("Tính năng đọc văn bản không được hỗ trợ trên trình duyệt này.", "error");
@@ -443,10 +443,20 @@
             }
 
             const utterance = new SpeechSynthesisUtterance(text);
+            // Sanitize text before speaking to avoid issues with special characters, though DOMPurify is for HTML
+            // For TTS, basic trimming and checking for empty string is usually sufficient.
+            utterance.text = String(text).trim(); 
+            if (utterance.text === '') {
+                console.warn("Text is empty after trimming, not speaking.");
+                return null;
+            }
+
             utterance.lang = lang;
             utterance.rate = rate; // Set the rate
 
             let selectedVoice = null;
+
+            // 1. Try to find the specific voice by URI
             if (voiceURI) {
                 selectedVoice = availableVoices.find(v => v.voiceURI === voiceURI);
                 if (!selectedVoice) {
@@ -455,20 +465,39 @@
                 }
             }
             
-            if (!selectedVoice) { // If specific voice not found or not requested
-                selectedVoice = availableVoices.find(v => v.lang === lang);
+            // 2. If no specific voice or not found, try to find a suitable voice by language
+            if (!selectedVoice) { 
+                // Prioritize local voices if available
+                selectedVoice = availableVoices.find(v => v.lang === lang && v.localService);
+                if (!selectedVoice) {
+                    // Fallback to any voice matching the language
+                    selectedVoice = availableVoices.find(v => v.lang === lang);
+                }
+                
                 if (!selectedVoice) {
                     console.warn(`No voice found for language: ${lang}. Using default system voice.`);
-                    showToast(`Không tìm thấy giọng đọc cụ thể cho ngôn ngữ ${lang}. Có thể sử dụng giọng mặc định của hệ thống.`, 'info', 5000);
+                    showToast(`Không tìm thấy giọng đọc cụ thể cho ngôn ngữ "${lang}". Có thể sử dụng giọng mặc định của hệ thống.`, 'info', 5000);
                 }
             }
 
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
+            } else {
+                // If still no voice, the browser will use its absolute default, which might not match the language.
+                // We should inform the user more clearly.
+                showToast(`Không tìm thấy giọng đọc nào phù hợp cho ngôn ngữ "${lang}". Chức năng đọc có thể không hoạt động hoặc sử dụng giọng mặc định không mong muốn của hệ thống.`, 'error', 7000);
+            }
+
+            // Store button container for UI updates
+            if (buttonContainer) {
+                currentPlayingButtonContainer = buttonContainer;
+                buttonContainer.querySelector('.speak-btn')?.classList.add('hidden');
+                buttonContainer.querySelector('.pause-btn')?.classList.remove('hidden');
+                buttonContainer.querySelector('.resume-btn')?.classList.add('hidden');
             }
 
             utterance.onend = () => {
-                console.log(`Speech ended for language: ${lang}, text: "${text.substring(0, Math.min(text.length, 30))}..."`);
+                console.log(`Speech ended for language: ${lang}, text: "${utterance.text.substring(0, Math.min(utterance.text.length, 30))}..."`);
                 currentPlayingUtterance = null;
                 if (currentPlayingButtonContainer) {
                     currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
@@ -491,11 +520,16 @@
                 } else if (event.error === 'audio-busy') {
                     errorMessage = 'Thiết bị âm thanh đang bận. Vui lòng thử lại.';
                 } else if (event.error === 'interrupted') {
-                    errorMessage = 'Quá trình đọc bị gián đoạn.';
+                    // This error is common with the stability workaround, so we can make it a less severe 'info' toast
+                    errorMessage = 'Quá trình đọc bị gián đoạn (thường do ổn định hệ thống).';
+                    showToast(errorMessage, 'info'); // Change to info
                 } else if (event.error) {
                     errorMessage = `Lỗi TTS: ${event.error}.`;
                 }
-                showToast(errorMessage, 'error');
+                if (event.error !== 'interrupted') { // Only show error toast for non-interrupted errors
+                    showToast(errorMessage, 'error');
+                }
+                
                 currentPlayingUtterance = null;
                 if (currentPlayingButtonContainer) {
                     currentPlayingButtonContainer.querySelector('.speak-btn')?.classList.remove('hidden');
@@ -579,7 +613,7 @@
         // Populate voices when they are loaded/changed
         speechSynthesis.onvoiceschanged = () => {
             availableVoices = speechSynthesis.getVoices();
-            console.log("Available voices updated:", availableVoices.map(v => `${v.name} (${v.lang})`));
+            console.log("Available voices updated:", availableVoices.map(v => `${v.name} (${v.lang}) - Local: ${v.localService}`));
             // If the deck modal is open, re-populate voice dropdown
             const deckModal = document.getElementById('deck-modal');
             if (deckModal && deckModal.parentNode === modalContainer) { // Check if it's currently in the DOM
@@ -774,20 +808,20 @@
                         <div>
                             <label class="text-sm font-medium">Ngôn ngữ mặc định cho thẻ</label>
                             <select id="deck-language-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                <option value="en-US">Tiếng Anh</option>
+                                <option value="en-US">Tiếng Anh (Hoa Kỳ)</option>
                                 <option value="vi-VN">Tiếng Việt</option>
                                 <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
                                 <option value="ko-KR">Tiếng Hàn</option>
                                 <option value="ja-JP">Tiếng Nhật</option>
-                                <!-- Add more languages as needed -->
-                            </select>
+                                </select>
                         </div>
                         <div id="deck-voice-selection-container" class="space-y-2">
                             <label class="text-sm font-medium">Giọng đọc (tùy chọn)</label>
                             <select id="deck-voice-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
                                 <option value="">-- Chọn giọng đọc --</option>
                             </select>
-                            <p id="no-voice-message" class="text-xs text-red-500 hidden">Không tìm thấy giọng đọc nào cho ngôn ngữ này trên thiết bị của bạn.</p>
+                            <p id="no-voice-message" class="text-xs text-red-500 hidden">Không tìm thấy giọng đọc nào cho ngôn ngữ này trên thiết bị của bạn. Vui lòng cài đặt thêm giọng đọc trong cài đặt hệ thống.</p>
+                            <p id="tts-not-supported-message" class="text-xs text-red-500 hidden">Trình duyệt của bạn không hỗ trợ tính năng chuyển văn bản thành giọng nói.</p>
                         </div>
                         <div class="flex justify-end gap-2 pt-4">
                             <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
@@ -807,18 +841,38 @@
             const deckLanguageInput = document.getElementById('deck-language-input');
             const deckVoiceInput = document.getElementById('deck-voice-input');
             const noVoiceMessage = document.getElementById('no-voice-message');
+            const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message');
+
 
             // Function to populate voice dropdown based on selected language
-            const populateVoiceDropdownInModal = (langInput, voiceInput, msgElement) => {
+            const populateVoiceDropdownInModal = (langInput, voiceInput, msgElement, ttsNotSupportedMsg) => {
+                if (!('speechSynthesis' in window)) {
+                    voiceInput.innerHTML = '<option value="">-- TTS không được hỗ trợ --</option>';
+                    voiceInput.disabled = true;
+                    msgElement.classList.add('hidden');
+                    ttsNotSupportedMsg.classList.remove('hidden');
+                    return;
+                }
+                ttsNotSupportedMsg.classList.add('hidden'); // Hide if TTS is supported
+
                 const selectedLang = langInput.value;
-                const filteredVoices = availableVoices.filter(v => v.lang === selectedLang);
+                // Filter and sort voices: prioritize local voices, then by name
+                const filteredVoices = availableVoices
+                    .filter(v => v.lang === selectedLang)
+                    .sort((a, b) => {
+                        // Prioritize local voices
+                        if (a.localService && !b.localService) return -1;
+                        if (!a.localService && b.localService) return 1;
+                        // Then sort by name
+                        return a.name.localeCompare(b.name);
+                    });
                 
                 voiceInput.innerHTML = '<option value="">-- Chọn giọng đọc --</option>';
                 if (filteredVoices.length > 0) {
                     filteredVoices.forEach(voice => {
                         const option = document.createElement('option');
                         option.value = voice.voiceURI;
-                        option.textContent = `${voice.name} (${voice.lang})`;
+                        option.textContent = `${voice.name} (${voice.lang})${voice.localService ? ' (Offline)' : ''}`;
                         voiceInput.appendChild(option);
                     });
                     msgElement.classList.add('hidden');
@@ -830,20 +884,28 @@
 
                 // Set selected voice if editing deck
                 if (deck && deck.voiceURI) {
-                    voiceInput.value = deck.voiceURI;
+                    // Check if the saved voice URI still exists in the filtered list
+                    const savedVoiceExists = filteredVoices.some(v => v.voiceURI === deck.voiceURI);
+                    if (savedVoiceExists) {
+                        voiceInput.value = deck.voiceURI;
+                    } else {
+                        // If saved voice is not available, try to select a default for the language or reset
+                        voiceInput.value = ''; 
+                        showToast(`Giọng đọc đã lưu (${deck.voiceURI}) không có sẵn. Vui lòng chọn lại.`, 'info', 5000);
+                    }
                 } else {
                     voiceInput.value = ''; // Reset if no voice set or language changed
                 }
             };
 
             // Initial population and event listener
-            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage);
-            deckLanguageInput.addEventListener('change', () => populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage));
+            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
+            deckLanguageInput.addEventListener('change', () => populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage));
 
             // Set the language input value if editing an existing deck
             deckLanguageInput.value = deck?.language || 'en-US';
             // Re-populate voices after setting language to ensure correct voices are shown for the pre-selected language
-            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage);
+            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
 
 
             document.getElementById('deck-form').addEventListener('submit', async (e) => {
@@ -1114,14 +1176,33 @@
 
                 const previewCardEl = document.getElementById('preview-card');
                 const frontTextEl = document.getElementById('preview-card-front-text');
-                const frontSpeakerBtn = previewCardEl.querySelector('.study-card-front .speak-btn');
+                const frontSpeakerControlDiv = previewCardEl.querySelector('.study-card-front .flex'); // Select the flex container for buttons
+                const frontSpeakBtn = frontSpeakerControlDiv.querySelector('.speak-btn');
+                const frontPauseBtn = frontSpeakerControlDiv.querySelector('.pause-btn');
+                const frontResumeBtn = frontSpeakerControlDiv.querySelector('.resume-btn');
+
                 const backContentEl = document.getElementById('preview-card-back-content');
                 const counterEl = document.getElementById('preview-counter');
                 const prevBtn = document.getElementById('prev-card-btn');
                 const nextBtn = document.getElementById('next-card-btn');
                 const flipBtn = document.getElementById('flip-preview-card-btn');
 
-                frontSpeakerBtn.innerHTML = icons.speaker;
+                // Initial setup for the main speaker buttons
+                frontSpeakBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const card = previewCards[currentPreviewCardIndex];
+                    const textToSpeak = card.term || card.front;
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, frontSpeakerControlDiv);
+                });
+                frontPauseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    pauseSpeech();
+                });
+                frontResumeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resumeSpeech();
+                });
+
 
                 function showPreviewCard() {
                     const card = previewCards[currentPreviewCardIndex];
@@ -1129,11 +1210,9 @@
                     
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
-                    frontSpeakerBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        // For front side, use deck language and current speed, and deck voice URI
-                        speakText(term, deckLanguage, currentSpeed, deckVoiceURI); 
-                    };
+                    
+                    // Update main speaker button's text to speak
+                    frontSpeakBtn.dataset.text = term; // This is a helper, but actual speakText uses current card's term.
 
                     const examplesHTML = (card.examples || []).map(ex => `
                         <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
@@ -1142,13 +1221,13 @@
                                 <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
                             </div>
                             <div class="flex items-center gap-2 example-audio-controls">
-                                <button class="speak-btn text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
+                                <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-text="${ex.sentence}">
                                     ${icons.speaker}
                                 </button>
-                                <button class="pause-btn text-amber-500 hover:text-amber-600 hidden">
+                                <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
                                     ${icons.pause}
                                 </button>
-                                <button class="resume-btn text-green-500 hover:text-green-600 hidden">
+                                <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
                                     ${icons.play_audio}
                                 </button>
                             </div>
@@ -1191,13 +1270,8 @@
                         speakButton.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const textToSpeak = speakButton.dataset.text;
-                            currentPlayingButtonContainer = controlDiv; // Store the container for UI updates
-                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI); // Pass deckVoiceURI
-                            
-                            // Update button visibility
-                            speakButton.classList.add('hidden');
-                            pauseButton.classList.remove('hidden');
-                            resumeButton.classList.add('hidden'); // Ensure resume is hidden
+                            // Pass the specific controlDiv to speakText to manage its buttons
+                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
                         });
 
                         pauseButton.addEventListener('click', (e) => {
@@ -1309,7 +1383,11 @@
 
                 const studyCardEl = document.getElementById('study-card');
                 const frontTextEl = document.getElementById('study-card-front-text');
-                const frontSpeakerBtn = studyCardEl.querySelector('.study-card-front .speak-btn');
+                const frontSpeakerControlDiv = studyCardEl.querySelector('.study-card-front .flex'); // Select the flex container for buttons
+                const frontSpeakBtn = frontSpeakerControlDiv.querySelector('.speak-btn');
+                const frontPauseBtn = frontSpeakerControlDiv.querySelector('.pause-btn');
+                const frontResumeBtn = frontSpeakerControlDiv.querySelector('.resume-btn');
+
                 const backContentEl = document.getElementById('study-card-back-content');
                 const counterEl = document.getElementById('study-counter');
                 const progressBarEl = document.getElementById('study-progress-bar');
@@ -1317,15 +1395,39 @@
                 const srsControlsEl = document.getElementById('srs-controls');
                 const completeMessageEl = document.getElementById('study-complete-message');
 
-                frontSpeakerBtn.innerHTML = icons.speaker;
+                // Initial setup for the main speaker buttons
+                frontSpeakBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const card = studyQueue[currentCardIndex];
+                    const textToSpeak = card.term || card.front;
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, frontSpeakerControlDiv);
+                });
+                frontPauseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    pauseSpeech();
+                });
+                frontResumeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resumeSpeech();
+                });
 
                 function showNextCard() {
                     speechSynthesis.cancel(); // Stop any speech when moving to next card
+                    
+                    // Reset main speaker buttons for the new card
+                    if (frontSpeakerControlDiv) {
+                        frontSpeakerControlDiv.querySelector('.speak-btn')?.classList.remove('hidden');
+                        frontSpeakerControlDiv.querySelector('.pause-btn')?.classList.add('hidden');
+                        frontSpeakerControlDiv.querySelector('.resume-btn')?.classList.add('hidden');
+                    }
+                    currentPlayingButtonContainer = null; // Clear global reference
+
                     if (studyQueue.length === 0) {
                         if (repeatQueue.length > 0) {
                             studyQueue = [...repeatQueue];
                             repeatQueue = [];
                             currentCardIndex = 0; // Reset index for the repeat queue
+                            showToast('Chuyển sang ôn tập lại các thẻ bạn đánh dấu "Lặp lại" hoặc "Khó".', 'info', 4000);
                         } else {
                             showAnswerControlEl.classList.add('hidden');
                             srsControlsEl.classList.add('hidden');
@@ -1345,10 +1447,8 @@
                     
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
-                    frontSpeakerBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        speakText(term, deckLanguage, currentSpeed, deckVoiceURI); // Pass deckVoiceURI
-                    };
+                    // No need to re-attach onclick, it's attached once per card view load.
+                    // Instead, just ensure the speakText function is ready to use the correct card data.
 
                     const examplesHTML = (card.examples || []).map(ex => `
                         <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
@@ -1357,13 +1457,13 @@
                                 <p class="text-sm text-slate-500 italic mt-1">${DOMPurify.sanitize(ex.translation || '')}</p>
                             </div>
                             <div class="flex items-center gap-2 example-audio-controls">
-                                <button class="speak-btn text-sky-500 hover:text-sky-600" data-text="${ex.sentence}">
+                                <button class="speak-btn text-sky-500 hover:text-sky-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-text="${ex.sentence}">
                                     ${icons.speaker}
                                 </button>
-                                <button class="pause-btn text-amber-500 hover:text-amber-600 hidden">
+                                <button class="pause-btn text-amber-500 hover:text-amber-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
                                     ${icons.pause}
                                 </button>
-                                <button class="resume-btn text-green-500 hover:text-green-600 hidden">
+                                <button class="resume-btn text-green-500 hover:text-green-600 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors hidden">
                                     ${icons.play_audio}
                                 </button>
                             </div>
@@ -1406,13 +1506,8 @@
                         speakButton.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const textToSpeak = speakButton.dataset.text;
-                            currentPlayingButtonContainer = controlDiv; // Store the container for UI updates
-                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI); // Pass deckVoiceURI
-                            
-                            // Update button visibility
-                            speakButton.classList.add('hidden');
-                            pauseButton.classList.remove('hidden');
-                            resumeButton.classList.add('hidden'); // Ensure resume is hidden
+                            // Pass the specific controlDiv to speakText to manage its buttons
+                            speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
                         });
 
                         pauseButton.addEventListener('click', (e) => {
@@ -1427,7 +1522,8 @@
                     });
 
                     const cardsDone = initialQueueSize - studyQueue.length - repeatQueue.length;
-                    counterEl.textContent = `Còn lại: ${studyQueue.length + repeatQueue.length}`;
+                    // Adjust counter to show only remaining cards for this session, not total including repeatQueue
+                    counterEl.textContent = `Còn lại: ${studyQueue.length + (repeatQueue.length > 0 ? ` (${repeatQueue.length} lặp lại)` : '')}`;
                     progressBarEl.style.width = `${(cardsDone / initialQueueSize) * 100}%`;
                 }
                 
@@ -1440,7 +1536,10 @@
                     if (rating < 3) {
                         repetitions = 0;
                         interval = 1;
-                        repeatQueue.push(card);
+                        // Only add to repeatQueue if not already there, and if it's not the current card (to prevent duplicates if user clicks "repeat" multiple times without advancing)
+                        if (!repeatQueue.some(item => item.id === card.id)) {
+                             repeatQueue.push(card);
+                        }
                     } else {
                         if (repetitions === 0) interval = 1;
                         else if (repetitions === 1) interval = 6;
@@ -1531,7 +1630,7 @@
                                 <div>
                                     <label class="text-sm font-medium">Ngôn ngữ cho bộ thẻ AI (Ngôn ngữ của thuật ngữ/mặt trước)</label>
                                     <select id="ai-deck-language-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                        <option value="en-US">Tiếng Anh</option>
+                                        <option value="en-US">Tiếng Anh (Hoa Kỳ)</option>
                                         <option value="vi-VN">Tiếng Việt</option>
                                         <option value="zh-CN">Tiếng Trung (Quan thoại)</option>
                                         <option value="ko-KR">Tiếng Hàn</option>
@@ -1652,10 +1751,11 @@
                     // Adjust prompt based on selected language for AI generation
                     if (aiDeckLanguage === 'vi-VN') {
                         prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Việt, hãy đảm bảo các trường "term", "pronunciation" (nếu có), "short_definition", "detailed_explanation", và "examples.sentence" đều bằng Tiếng Việt. Trường "examples.translation" phải bằng Tiếng Anh.`;
-                    } else { // For en-US, zh-CN, ko-KR, ja-JP
-                        // Need to get the display name of the language from the original select options
+                    } else if (aiDeckLanguage === 'en-US') { // Explicitly handle English
+                        prompt += `\n\nVì ngôn ngữ bộ thẻ là Tiếng Anh, hãy đảm bảo các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng Tiếng Anh. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
+                    } else { // For zh-CN, ko-KR, ja-JP
                         const selectedOption = Array.from(aiDeckLanguageInput.options).find(opt => opt.value === aiDeckLanguage);
-                        const targetLanguageName = selectedOption ? selectedOption.text : aiDeckLanguage; // Fallback to value if text not found
+                        const targetLanguageName = selectedOption ? selectedOption.text.split('(')[0].trim() : aiDeckLanguage; // Get only name, e.g., "Tiếng Trung"
                         prompt += `\n\nVì ngôn ngữ bộ thẻ là ${targetLanguageName}, hãy đảm bảo các trường "term", "pronunciation" (nếu có), và "examples.sentence" đều bằng ${targetLanguageName}. Các trường "short_definition", "detailed_explanation", và "examples.translation" phải bằng Tiếng Việt.`;
                     }
                     
@@ -1673,7 +1773,12 @@
                         // Fallback to simpler regex if the ```json block is not found
                         const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
                         if (simplerJsonMatch) {
-                            parsedJson = JSON.parse(simplerJsonMatch[0]);
+                            try {
+                                parsedJson = JSON.parse(simplerJsonMatch[0]);
+                            } catch (parseError) {
+                                console.error("Error parsing simpler JSON match:", parseError);
+                                throw new Error("AI không trả về một mảng JSON hợp lệ hoặc định dạng không đúng. Lỗi phân tích cú pháp.");
+                            }
                         } else {
                             throw new Error("AI không trả về một mảng JSON hợp lệ.");
                         }
@@ -1683,13 +1788,29 @@
                     if (!Array.isArray(parsedJson) || parsedJson.length === 0) {
                         throw new Error("AI không tạo ra bất kỳ thẻ nào hoặc định dạng không đúng.");
                     }
-                    generatedCards = parsedJson;
+                    // Filter out cards that are completely empty or malformed
+                    generatedCards = parsedJson.filter(card => 
+                        (card.term && card.term.trim() !== '') || 
+                        (card.front && card.front.trim() !== '') ||
+                        (card.short_definition && card.short_definition.trim() !== '') ||
+                        (card.back && card.back.trim() !== '')
+                    );
+
+                    if (generatedCards.length === 0) {
+                        throw new Error("AI đã tạo ra thẻ nhưng không có thẻ nào hợp lệ sau khi lọc.");
+                    }
                     
                     state = 'review';
                     render(); // Re-render to show review state
                 } catch (error) {
                     console.error("AI generation error:", error);
-                    showToast("Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.", 'error');
+                    let userFriendlyError = "Đã xảy ra lỗi khi tạo thẻ bằng AI. Vui lòng thử lại.";
+                    if (error.message.includes("JSON")) {
+                        userFriendlyError = "AI không thể tạo thẻ theo định dạng yêu cầu. Vui lòng thử lại với một chủ đề khác hoặc mô tả chi tiết hơn.";
+                    } else if (error.message.includes("Quota exceeded")) {
+                        userFriendlyError = "Hạn mức sử dụng AI đã hết hoặc đang quá tải. Vui lòng thử lại sau vài phút.";
+                    }
+                    showToast(userFriendlyError, 'error', 7000);
                     state = 'input'; // Go back to input state
                     render(); // Re-render to show input state with error message
                 } finally {
@@ -1721,14 +1842,29 @@
                         // Ensure 'front' and 'back' properties are populated for consistency
                         const newCard = {
                             ...card,
-                            front: card.term || card.front || '', // Use term if front is missing
-                            back: card.short_definition || card.back || '', // Use short_definition if back is missing
+                            // Ensure term/front and short_definition/back are explicitly strings and trimmed
+                            term: String(card.term || card.front || '').trim(), 
+                            front: String(card.term || card.front || '').trim(), 
+                            short_definition: String(card.short_definition || card.back || '').trim(), 
+                            back: String(card.short_definition || card.back || '').trim(), 
+                            detailed_explanation: String(card.detailed_explanation || '').trim(),
+                            pronunciation: String(card.pronunciation || '').trim(),
+                            // Ensure examples are an array of objects with sentence and translation
+                            examples: Array.isArray(card.examples) ? card.examples.map(ex => ({
+                                sentence: String(ex.sentence || '').trim(),
+                                translation: String(ex.translation || '').trim()
+                            })).filter(ex => ex.sentence !== '') : [],
                             nextReviewDate: Timestamp.now(),
                             interval: 0,
                             easeFactor: 2.5,
                             repetitions: 0
                         };
-                        selectedCards.push(newCard);
+                        // Basic validation for essential fields after processing
+                        if (newCard.term && newCard.short_definition) {
+                            selectedCards.push(newCard);
+                        } else {
+                            console.warn("Skipping malformed generated card during save:", card);
+                        }
                     }
                 });
 
