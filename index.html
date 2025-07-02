@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard AI - MVP (Cập nhật cài đặt giọng đọc)</title>
+    <title>Flashcard AI - MVP (Robust JSON)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
@@ -208,10 +208,6 @@
                         <!-- Dark Mode Toggle Button -->
                         <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors">
                             <!-- Icon will be dynamically set by JS -->
-                        </button>
-                        <!-- Settings Button -->
-                        <button id="settings-btn" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors" aria-label="Cài đặt">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
                         <span id="user-display-name" class="text-sm font-medium"></span>
                         <button id="logout-btn" class="text-sm text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Đăng xuất</button>
@@ -424,27 +420,6 @@
         </div>
     </div>
 
-    <!-- Template for Settings Modal -->
-    <template id="template-settings-modal">
-        <div id="settings-modal-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
-        <div id="settings-modal" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6">
-            <h2 class="text-xl font-bold mb-4">Cài đặt Giọng đọc</h2>
-            <p class="text-sm text-slate-500 mb-4">Chọn giọng đọc mặc định cho từng ngôn ngữ được sử dụng trong các thẻ của bạn. Giọng đọc này sẽ được ưu tiên sử dụng khi phát âm thanh.</p>
-            <form id="tts-settings-form" class="space-y-4">
-                <div id="voice-settings-list" class="space-y-4 max-h-80 overflow-y-auto pr-2">
-                    <!-- Voice settings for each language will be dynamically added here -->
-                </div>
-                <p id="tts-not-supported-message-settings" class="text-xs text-red-500 hidden">Trình duyệt của bạn không hỗ trợ tính năng chuyển văn bản thành giọng nói.</p>
-                <div class="flex justify-end gap-2 pt-4">
-                    <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                    <button type="submit" id="save-tts-settings-btn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2">
-                        Lưu cài đặt
-                    </button>
-                </div>
-            </form>
-        </div>
-    </template>
-
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -473,8 +448,7 @@
             orderBy, 
             serverTimestamp,
             writeBatch,
-            Timestamp,
-            setDoc // Import setDoc for settings
+            Timestamp
         } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
         import { getAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-ai.js";
 
@@ -501,11 +475,9 @@
         let currentPlayingUtterance = null; // To manage the currently playing speech utterance
         let currentPlayingButtonContainer = null; // To manage the UI of the buttons
         let availableVoices = []; // Store available voices
-        let userTtsSettings = {}; // Store user's preferred voices for each language
 
         // --- TTS Stability Workaround (from aitran.html) ---
         // This interval periodically pauses and resumes speech synthesis to prevent it from getting stuck.
-        // This workaround will be removed if better error handling and voice management is implemented.
         try {
             setInterval(() => {
                 if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
@@ -527,7 +499,6 @@
         const modalContainer = document.getElementById('modal-container'); // This now contains the permanent modal structure
         const toastContainer = document.getElementById('toast-container');
         const themeToggleButton = document.getElementById('theme-toggle');
-        const settingsButton = document.getElementById('settings-btn'); // New settings button
 
         // References to the permanently existing AI explanation modal elements
         const aiExplanationModal = document.getElementById('ai-explanation-modal');
@@ -551,7 +522,7 @@
         };
 
         // --- Text-to-Speech (TTS) UTILITY ---
-        function speakText(text, lang = 'en-US', rate = 1.0, onEndCallback = null, buttonContainer = null) {
+        function speakText(text, lang = 'en-US', rate = 1.0, voiceURI = null, onEndCallback = null, buttonContainer = null) {
             if (!text || !('speechSynthesis' in window)) {
                 console.warn("SpeechSynthesis not supported or text is empty.");
                 showToast("Tính năng đọc văn bản không được hỗ trợ trên trình duyệt này.", "error");
@@ -587,29 +558,29 @@
 
             let selectedVoice = null;
 
-            // 1. Try to use the voice selected by the user in settings for this language
-            if (userTtsSettings[lang]) {
-                selectedVoice = availableVoices.find(v => v.voiceURI === userTtsSettings[lang]);
+            if (voiceURI) {
+                selectedVoice = availableVoices.find(v => v.voiceURI === voiceURI);
                 if (!selectedVoice) {
-                    console.warn(`Specific voice (URI: ${userTtsSettings[lang]}) from settings not found for lang ${lang}. Falling back.`);
+                    console.warn(`Specific voice (URI: ${voiceURI}) not found. Falling back to language-matching voice.`);
+                    showToast(`Giọng đọc đã chọn không có sẵn. Đang dùng giọng mặc định cho ngôn ngữ này.`, 'info', 5000);
                 }
             }
             
-            // 2. Fallback: Try to find a local service voice for the language
             if (!selectedVoice) { 
                 selectedVoice = availableVoices.find(v => v.lang === lang && v.localService);
-            }
-            
-            // 3. Fallback: Try to find any voice for the language
-            if (!selectedVoice) {
-                selectedVoice = availableVoices.find(v => v.lang === lang);
+                if (!selectedVoice) {
+                    selectedVoice = availableVoices.find(v => v.lang === lang);
+                }
+                
+                if (!selectedVoice) {
+                    console.warn(`No voice found for language: ${lang}. Using default system voice.`);
+                    showToast(`Không tìm thấy giọng đọc cụ thể cho ngôn ngữ "${lang}". Có thể sử dụng giọng mặc định của hệ thống.`, 'info', 5000);
+                }
             }
 
-            // 4. Final Fallback: If no specific voice, use default system voice and warn
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
             } else {
-                console.warn(`No suitable voice found for language: ${lang}. Using default system voice.`);
                 showToast(`Không tìm thấy giọng đọc nào phù hợp cho ngôn ngữ "${lang}". Chức năng đọc có thể không hoạt động hoặc sử dụng giọng mặc định không mong muốn của hệ thống.`, 'error', 7000);
             }
 
@@ -744,23 +715,26 @@
         speechSynthesis.onvoiceschanged = () => {
             availableVoices = speechSynthesis.getVoices();
             console.log("Available voices updated:", availableVoices.map(v => `${v.name} (${v.lang}) - Local: ${v.localService}`));
-            // If settings modal is open, re-populate voice dropdowns
-            const settingsModal = document.getElementById('settings-modal');
-            if (settingsModal && modalContainer.contains(settingsModal)) {
-                populateVoiceDropdownsInSettings();
+            const deckModal = document.getElementById('deck-modal');
+            if (deckModal && modalContainer.contains(deckModal)) { 
+                const deckLanguageInput = document.getElementById('deck-language-input');
+                const deckVoiceInput = document.getElementById('deck-voice-input');
+                const noVoiceMessage = document.getElementById('no-voice-message');
+                const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message');
+                if (deckLanguageInput && deckVoiceInput && noVoiceMessage && ttsNotSupportedMessage) {
+                    populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
+                }
             }
         };
 
 
         // --- AUTHENTICATION LOGIC ---
-        onAuthStateChanged(auth, async user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
                 currentUser = user;
                 authView.classList.add('hidden');
                 appView.classList.remove('hidden');
                 userDisplayName.textContent = user.displayName || user.email;
-                // Load user TTS settings
-                await loadUserTtsSettings();
                 renderDecksView();
             } else {
                 currentUser = null;
@@ -769,38 +743,6 @@
                 renderAuthForms();
             }
         });
-
-        async function loadUserTtsSettings() {
-            if (!currentUser) return;
-            try {
-                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'ttsSettings');
-                const settingsSnap = await getDoc(settingsRef);
-                if (settingsSnap.exists()) {
-                    userTtsSettings = settingsSnap.data().voices || {};
-                    console.log("Loaded user TTS settings:", userTtsSettings);
-                } else {
-                    userTtsSettings = {}; // No settings found, use default empty object
-                    console.log("No user TTS settings found. Using default empty object.");
-                }
-            } catch (error) {
-                console.error("Error loading user TTS settings:", error);
-                showToast("Lỗi khi tải cài đặt giọng đọc.", "error");
-                userTtsSettings = {}; // Fallback to empty object on error
-            }
-        }
-
-        async function saveUserTtsSettings(settings) {
-            if (!currentUser) return;
-            try {
-                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'ttsSettings');
-                await setDoc(settingsRef, { voices: settings }, { merge: true }); // Use merge to only update 'voices' field
-                userTtsSettings = settings; // Update global state
-                showToast("Đã lưu cài đặt giọng đọc thành công!", "success");
-            } catch (error) {
-                console.error("Error saving user TTS settings:", error);
-                showToast("Lỗi khi lưu cài đặt giọng đọc.", "error");
-            }
-        }
 
         function renderAuthForms(showLogin = true) {
             authForms.innerHTML = `
@@ -884,9 +826,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (themeToggleButton) {
                 themeToggleButton.addEventListener('click', toggleTheme);
-            }
-            if (settingsButton) {
-                settingsButton.addEventListener('click', renderSettingsModal); // Add event listener for settings button
             }
         });
 
@@ -976,6 +915,14 @@
                                 <option value="ja-JP">Tiếng Nhật</option>
                             </select>
                         </div>
+                        <div id="deck-voice-selection-container" class="space-y-2">
+                            <label class="text-sm font-medium">Giọng đọc (tùy chọn)</label>
+                            <select id="deck-voice-input" class="w-full mt-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <option value="">-- Chọn giọng đọc --</option>
+                            </select>
+                            <p id="no-voice-message" class="text-xs text-red-500 hidden">Không tìm thấy giọng đọc nào cho ngôn ngữ này trên thiết bị của bạn. Vui lòng cài đặt thêm giọng đọc trong cài đặt hệ thống.</p>
+                            <p id="tts-not-supported-message" class="text-xs text-red-500 hidden">Trình duyệt của bạn không hỗ trợ tính năng chuyển văn bản thành giọng nói.</p>
+                        </div>
                         <div class="flex justify-end gap-2 pt-4">
                             <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
                             <button type="submit" id="save-deck-btn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2">
@@ -992,7 +939,63 @@
             document.querySelector('.cancel-btn').addEventListener('click', closeModal);
 
             const deckLanguageInput = document.getElementById('deck-language-input');
-            deckLanguageInput.value = deck?.language || 'en-US'; // Set default or existing language
+            const deckVoiceInput = document.getElementById('deck-voice-input');
+            const noVoiceMessage = document.getElementById('no-voice-message');
+            const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message');
+
+            const populateVoiceDropdownInModal = (langInput, voiceInput, msgElement, ttsNotSupportedMsg) => {
+                if (!('speechSynthesis' in window)) {
+                    voiceInput.innerHTML = '<option value="">-- TTS không được hỗ trợ --</option>';
+                    voiceInput.disabled = true;
+                    msgElement.classList.add('hidden');
+                    ttsNotSupportedMsg.classList.remove('hidden');
+                    return;
+                }
+                ttsNotSupportedMsg.classList.add('hidden'); 
+
+                const selectedLang = langInput.value;
+                const filteredVoices = availableVoices
+                    .filter(v => v.lang === selectedLang)
+                    .sort((a, b) => {
+                        if (a.localService && !b.localService) return -1;
+                        if (!a.localService && b.localService) return 1;
+                        return a.name.localeCompare(b.name);
+                    });
+                
+                voiceInput.innerHTML = '<option value="">-- Chọn giọng đọc --</option>';
+                if (filteredVoices.length > 0) {
+                    filteredVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.voiceURI;
+                        option.textContent = `${voice.name} (${voice.lang})${voice.localService ? ' (Offline)' : ''}`;
+                        voiceInput.appendChild(option);
+                    });
+                    msgElement.classList.add('hidden');
+                    voiceInput.disabled = false;
+                } else {
+                    msgElement.classList.remove('hidden');
+                    voiceInput.disabled = true;
+                }
+
+                if (deck && deck.voiceURI) {
+                    const savedVoiceExists = filteredVoices.some(v => v.voiceURI === deck.voiceURI);
+                    if (savedVoiceExists) {
+                        voiceInput.value = deck.voiceURI;
+                    } else {
+                        voiceInput.value = ''; 
+                        showToast(`Giọng đọc đã lưu (${deck.voiceURI}) không có sẵn. Vui lòng chọn lại.`, 'info', 5000);
+                    }
+                } else {
+                    voiceInput.value = ''; 
+                }
+            };
+
+            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
+            deckLanguageInput.addEventListener('change', () => populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage));
+
+            deckLanguageInput.value = deck?.language || 'en-US';
+            populateVoiceDropdownInModal(deckLanguageInput, deckVoiceInput, noVoiceMessage, ttsNotSupportedMessage);
+
 
             document.getElementById('deck-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1003,6 +1006,7 @@
                 const name = document.getElementById('deck-name-input').value.trim();
                 const description = document.getElementById('deck-desc-input').value.trim();
                 const language = deckLanguageInput.value; 
+                const voiceURI = deckVoiceInput.value || null; 
 
                 if (!name) {
                     showToast('Tên bộ thẻ không được để trống.', 'error');
@@ -1011,7 +1015,7 @@
                     return;
                 }
 
-                const deckData = { name, description, language }; 
+                const deckData = { name, description, language, voiceURI }; 
                 try {
                     if (deck) {
                         await updateDoc(doc(db, 'users', currentUser.uid, 'decks', deck.id), deckData);
@@ -1035,38 +1039,7 @@
         }
         
         async function deleteDeck(deckId, deckName) {
-            // Replace confirm with custom modal for better UX
-            const confirmed = await new Promise(resolve => {
-                const confirmationModalId = 'confirm-delete-deck-modal';
-                const modalHTML = `
-                    <div id="${confirmationModalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
-                    <div id="${confirmationModalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6 text-center">
-                        <h2 class="text-xl font-bold mb-4">Xác nhận xóa</h2>
-                        <p class="text-slate-700 dark:text-slate-300 mb-6">Bạn có chắc chắn muốn xóa bộ thẻ "<span class="font-semibold">${deckName}</span>" không? Hành động này không thể hoàn tác.</p>
-                        <div class="flex justify-center gap-4">
-                            <button id="confirm-cancel-btn" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                            <button id="confirm-delete-btn" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white">Xóa</button>
-                        </div>
-                    </div>
-                `;
-                modalContainer.innerHTML = modalHTML;
-
-                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(false);
-                });
-                document.getElementById('confirm-delete-btn').addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(true);
-                });
-                document.getElementById(`${confirmationModalId}-overlay`).addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(false);
-                });
-            });
-
-            if (!confirmed) return;
-
+            if (!confirm(`Bạn có chắc chắn muốn xóa bộ thẻ "${deckName}" không? Hành động này không thể hoàn tác.`)) return;
             try {
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
                 const cardsSnapshot = await getDocs(cardsRef);
@@ -1239,38 +1212,7 @@
         }
 
         async function deleteCard(deckId, cardId) {
-            // Replace confirm with custom modal for better UX
-            const confirmed = await new Promise(resolve => {
-                const confirmationModalId = 'confirm-delete-card-modal';
-                const modalHTML = `
-                    <div id="${confirmationModalId}-overlay" class="modal-overlay fixed inset-0 bg-black/50 z-40"></div>
-                    <div id="${confirmationModalId}" class="modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-lg z-50 p-6 text-center">
-                        <h2 class="text-xl font-bold mb-4">Xác nhận xóa</h2>
-                        <p class="text-slate-700 dark:text-slate-300 mb-6">Bạn có chắc chắn muốn xóa thẻ này không? Hành động này không thể hoàn tác.</p>
-                        <div class="flex justify-center gap-4">
-                            <button id="confirm-cancel-btn" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">Hủy</button>
-                            <button id="confirm-delete-btn" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white">Xóa</button>
-                        </div>
-                    </div>
-                `;
-                modalContainer.innerHTML = modalHTML;
-
-                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(false);
-                });
-                document.getElementById('confirm-delete-btn').addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(true);
-                });
-                document.getElementById(`${confirmationModalId}-overlay`).addEventListener('click', () => {
-                    modalContainer.innerHTML = '';
-                    resolve(false);
-                });
-            });
-
-            if (!confirmed) return;
-
+            if (!confirm('Bạn có chắc chắn muốn xóa thẻ này?')) return;
             try {
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'decks', deckId, 'cards', cardId));
                 showToast('Đã xóa thẻ thành công!', 'success');
@@ -1282,7 +1224,7 @@
         }
         
         // --- COMMON CARD RENDERING LOGIC FOR PREVIEW/STUDY BACK FACE ---
-        function renderCardBackContent(card, deckLanguage, currentSpeed, backContentEl) {
+        function renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl) {
             const examplesHTML = (card.examples || []).map(ex => `
                 <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg flex items-center justify-between">
                     <div class="flex-1">
@@ -1338,8 +1280,7 @@
                 speakButton.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const textToSpeak = speakButton.dataset.text;
-                    // Use deckLanguage for example TTS
-                    speakText(textToSpeak, deckLanguage, currentSpeed, null, controlDiv);
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, controlDiv);
                 });
 
                 pauseButton.addEventListener('click', (e) => {
@@ -1364,6 +1305,7 @@
                 if (!deckSnap.exists()) throw new Error("Deck not found");
                 const deckData = deckSnap.data();
                 const deckLanguage = deckData.language || 'en-US'; 
+                const deckVoiceURI = deckData.voiceURI || null; 
 
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
                 const q = query(cardsRef, orderBy('createdAt', 'asc')); 
@@ -1409,7 +1351,7 @@
                     e.stopPropagation();
                     const card = previewCards[currentPreviewCardIndex];
                     const textToSpeak = card.term || card.front;
-                    speakText(textToSpeak, deckLanguage, currentSpeed, null, frontSpeakerControlDiv);
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, frontSpeakerControlDiv);
                 });
                 frontPauseBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1442,7 +1384,7 @@
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
                     
-                    renderCardBackContent(card, deckLanguage, currentSpeed, backContentEl); // Pass deckLanguage
+                    renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl);
 
                     counterEl.textContent = `${currentPreviewCardIndex + 1}/${previewCards.length}`;
                     prevBtn.disabled = currentPreviewCardIndex === 0;
@@ -1505,6 +1447,7 @@
                 if (!deckSnap.exists()) throw new Error("Deck not found");
                 const deckData = deckSnap.data();
                 const deckLanguage = deckData.language || 'en-US'; 
+                const deckVoiceURI = deckData.voiceURI || null; 
 
                 const today = Timestamp.now();
                 const cardsRef = collection(db, 'users', currentUser.uid, 'decks', deckId, 'cards');
@@ -1557,7 +1500,7 @@
                     e.stopPropagation();
                     const card = studyQueue[currentCardIndex];
                     const textToSpeak = card.term || card.front;
-                    speakText(textToSpeak, deckLanguage, currentSpeed, null, frontSpeakerControlDiv);
+                    speakText(textToSpeak, deckLanguage, currentSpeed, deckVoiceURI, null, frontSpeakerControlDiv);
                 });
                 frontPauseBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1610,7 +1553,7 @@
                     const term = card.term || card.front;
                     frontTextEl.innerHTML = DOMPurify.sanitize(term);
 
-                    renderCardBackContent(card, deckLanguage, currentSpeed, backContentEl); // Pass deckLanguage
+                    renderCardBackContent(card, deckLanguage, currentSpeed, deckVoiceURI, backContentEl);
 
                     counterEl.textContent = `${initialQueueSize - studyQueue.length + repeatQueue.length + 1}/${initialQueueSize + repeatQueue.length}`;
                     progressBarEl.style.width = `${((initialQueueSize - studyQueue.length) / initialQueueSize) * 100}%`;
@@ -1858,59 +1801,25 @@
                     const response = result.response;
                     const text = response.text();
                     
-                    // --- Nâng cấp độ mạnh mẽ của Parsing JSON từ AI ---
+                    const jsonBlockRegex = /```json([\s\S]*?)```/;
+                    const jsonMatch = text.match(jsonBlockRegex);
+                    
                     let parsedJson;
-                    try {
-                        const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
-                        const jsonMatch = text.match(jsonBlockRegex);
-                        let jsonString = '';
-
-                        if (jsonMatch && jsonMatch[1]) {
-                            jsonString = jsonMatch[1];
+                    if (jsonMatch && jsonMatch[1]) {
+                        parsedJson = JSON.parse(jsonMatch[1]);
+                    } else {
+                        const simplerJsonMatch = text.match(/\[[\s\S]*\]/);
+                        if (simplerJsonMatch) {
+                            try {
+                                parsedJson = JSON.parse(simplerJsonMatch[0]);
+                            } catch (parseError) {
+                                console.error("Error parsing simpler JSON match:", parseError);
+                                throw new Error("AI không trả về một mảng JSON hợp lệ hoặc định dạng không đúng. Lỗi phân tích cú pháp.");
+                            }
                         } else {
-                            // Fallback: Try to find a JSON array directly if no ```json``` block
-                            const arrayMatch = text.match(/\[\s*{[\s\S]*?}\s*\]/); 
-                            if (arrayMatch && arrayMatch[0]) {
-                                jsonString = arrayMatch[0];
-                            } else {
-                                // More aggressive fallback: try to strip surrounding text
-                                jsonString = text.replace(/^(.*?)(?=\[|\{)/s, '').trim(); 
-                                jsonString = jsonString.replace(/(?<=\]|\}).*$/s, '').trim(); 
-                            }
+                            throw new Error("AI không trả về một mảng JSON hợp lệ.");
                         }
-
-                        if (!jsonString) {
-                            throw new Error("Không thể trích xuất JSON từ phản hồi của AI.");
-                        }
-
-                        parsedJson = JSON.parse(jsonString);
-
-                        // Basic Schema Validation (can be expanded)
-                        if (!Array.isArray(parsedJson)) {
-                            throw new Error("Phản hồi của AI không phải là một mảng JSON.");
-                        }
-                        parsedJson.forEach((card, index) => {
-                            if (typeof card !== 'object' || card === null) {
-                                console.warn(`Thẻ AI không hợp lệ tại chỉ mục ${index}:`, card);
-                            }
-                            // Ensure required fields for a valid card
-                            if (!((card.term && card.term.trim() !== '') || (card.front && card.front.trim() !== ''))) {
-                                console.warn(`Thẻ AI thiếu 'term' hoặc 'front' tại chỉ mục ${index}:`, card);
-                            }
-                            if (!((card.short_definition && card.short_definition.trim() !== '') || (card.back && card.back.trim() !== ''))) {
-                                console.warn(`Thẻ AI thiếu 'short_definition' hoặc 'back' tại chỉ mục ${index}:`, card);
-                            }
-                            if (card.examples && !Array.isArray(card.examples)) {
-                                console.warn(`Trường 'examples' không phải là mảng tại chỉ mục ${index}:`, card);
-                                card.examples = []; // Correct to empty array
-                            }
-                        });
-
-                    } catch (parseError) {
-                        console.error("Lỗi khi phân tích cú pháp JSON từ AI:", parseError);
-                        throw new Error("AI không trả về một mảng JSON hợp lệ hoặc định dạng không đúng. Lỗi phân tích cú pháp.");
                     }
-                    // --- Kết thúc Nâng cấp độ mạnh mẽ của Parsing JSON từ AI ---
 
                     // Refined filtering: A card is valid if it has either a term/front OR a short_definition/back.
                     // We will ensure both are populated during save.
@@ -2140,95 +2049,6 @@
                 aiExplanationOverlay.classList.add('hidden'); 
                 aiExplanationModal.classList.remove('is-visible');
             }
-        }
-
-        // --- Settings Modal Logic ---
-        function renderSettingsModal() {
-            const modalId = 'settings-modal';
-            const template = document.getElementById('template-settings-modal');
-            modalContainer.innerHTML = ''; // Clear previous modals
-            modalContainer.appendChild(template.content.cloneNode(true));
-
-            const closeModal = () => modalContainer.innerHTML = '';
-            document.getElementById(`${modalId}-overlay`).addEventListener('click', closeModal);
-            document.querySelector('.cancel-btn').addEventListener('click', closeModal);
-
-            const ttsNotSupportedMessage = document.getElementById('tts-not-supported-message-settings');
-            const voiceSettingsList = document.getElementById('voice-settings-list');
-            const saveSettingsBtn = document.getElementById('save-tts-settings-btn');
-
-            if (!('speechSynthesis' in window)) {
-                ttsNotSupportedMessage.classList.remove('hidden');
-                voiceSettingsList.innerHTML = `<p class="text-center text-slate-500">Tính năng chuyển văn bản thành giọng nói không được hỗ trợ trên trình duyệt này.</p>`;
-                saveSettingsBtn.disabled = true;
-                return;
-            } else {
-                ttsNotSupportedMessage.classList.add('hidden');
-            }
-
-            // Define common languages for TTS settings
-            const commonLanguages = [
-                { code: 'en-US', name: 'Tiếng Anh (Hoa Kỳ)' },
-                { code: 'vi-VN', name: 'Tiếng Việt' },
-                { code: 'zh-CN', name: 'Tiếng Trung (Quan thoại)' },
-                { code: 'ko-KR', name: 'Tiếng Hàn' },
-                { code: 'ja-JP', name: 'Tiếng Nhật' },
-                { code: 'fr-FR', name: 'Tiếng Pháp' },
-                { code: 'de-DE', name: 'Tiếng Đức' },
-                { code: 'es-ES', name: 'Tiếng Tây Ban Nha' },
-            ];
-
-            // Function to populate voice dropdowns
-            window.populateVoiceDropdownsInSettings = () => { // Make it global for onvoiceschanged to call
-                voiceSettingsList.innerHTML = ''; // Clear existing list
-                commonLanguages.forEach(lang => {
-                    const langVoices = availableVoices
-                        .filter(v => v.lang === lang.code)
-                        .sort((a, b) => {
-                            if (a.localService && !b.localService) return -1;
-                            if (!a.localService && b.localService) return 1;
-                            return a.name.localeCompare(b.name);
-                        });
-
-                    const voiceDropdownHtml = `
-                        <div class="border border-slate-200 dark:border-slate-700 p-4 rounded-lg">
-                            <label for="voice-select-${lang.code}" class="text-sm font-medium block mb-2">${lang.name}</label>
-                            <select id="voice-select-${lang.code}" data-lang="${lang.code}" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                <option value="">-- Giọng đọc mặc định --</option>
-                                ${langVoices.map(voice => `
-                                    <option value="${voice.voiceURI}" ${userTtsSettings[lang.code] === voice.voiceURI ? 'selected' : ''}>
-                                        ${voice.name} (${voice.lang})${voice.localService ? ' (Offline)' : ''}
-                                    </option>
-                                `).join('')}
-                            </select>
-                            ${langVoices.length === 0 ? `<p class="text-xs text-red-500 mt-1">Không tìm thấy giọng đọc nào cho ngôn ngữ này.</p>` : ''}
-                        </div>
-                    `;
-                    voiceSettingsList.innerHTML += voiceDropdownHtml;
-                });
-            };
-
-            populateVoiceDropdownsInSettings(); // Initial population
-
-            document.getElementById('tts-settings-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                saveSettingsBtn.disabled = true;
-                saveSettingsBtn.innerHTML = icons.loading + ' Đang lưu...';
-
-                const newTtsSettings = {};
-                voiceSettingsList.querySelectorAll('select[data-lang]').forEach(select => {
-                    const langCode = select.dataset.lang;
-                    const selectedVoiceURI = select.value;
-                    if (selectedVoiceURI) {
-                        newTtsSettings[langCode] = selectedVoiceURI;
-                    }
-                });
-
-                await saveUserTtsSettings(newTtsSettings);
-                closeModal();
-                saveSettingsBtn.disabled = false;
-                saveSettingsBtn.innerHTML = 'Lưu cài đặt';
-            });
         }
 
     </script>
